@@ -39,13 +39,20 @@ export default function LoginPage({ params }: { params: { id: string } }) {
 
     setLoading(false)
 
-    if (error || !data) {
-      setError('Profil tidak ditemukan')
+    console.log('Login attempt:', { id, password, data, error })
+    
+    if (error) {
+      setError(`Error: ${error.message}`)
+      return
+    }
+
+    if (!data) {
+      setError('Profil tidak ditemukan di database')
       return
     }
 
     if (data.password !== password) {
-      setError('Password salah')
+      setError(`Password salah. Password di DB: ${data.password}`)
       return
     }
 
