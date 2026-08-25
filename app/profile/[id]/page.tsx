@@ -6,20 +6,34 @@ import type { Profile, JurnalEntry } from '@/lib/types'
 import Link from 'next/link'
 import JurnalForm from '@/components/JurnalForm'
 import JurnalEntryCard from '@/components/JurnalEntryCard'
+import { useSession } from '@/components/SessionProvider'
 
 export default function ProfilePage({ params }: { params: { id: string } }) {
   const { id } = params
+  const { session } = useSession()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [entries, setEntries] = useState<JurnalEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
+    if (!session) {
+      window.location.href = '/'
+      return
+    }
+    if (session.profileId !== id) {
+      window.location.href = `/visitor/${id}`
+    }
+  }, [session, id])
+
+  useEffect(() => {
     const fetchData = async () => {
       const [{ data: profileData }, { data: entryData }] = await Promise.all([
-        (supabase.from('profiles') as any).select('*').eq('id', id).single(),
-        (supabase
-          .from('jurnal_entries') as any)
+        (supabase.from('profiles') as any)
+          .select('*')
+          .eq('id', id)
+          .single(),
+        (supabase.from('jurnal_entries') as any)
           .select('*')
           .eq('profile_id', id)
           .order('day', { ascending: true }),
@@ -29,9 +43,10 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
       setEntries(entryData || [])
       setLoading(false)
     }
-
     fetchData()
+  }, [id])
 
+  useEffect(() => {
     const channel = supabase
       .channel(`jurnal-${id}`)
       .on(
@@ -60,16 +75,10 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
         }
       )
       .subscribe()
-
     return () => {
       supabase.removeChannel(channel)
     }
   }, [id])
-
-  const handleDelete = async (entryId: string) => {
-    if (!confirm('Hapus entry ini?')) return
-    await (supabase.from('jurnal_entries') as any).delete().eq('id', entryId)
-  }
 
   const handleEntryChanged = (updated: JurnalEntry) => {
     setEntries((prev) =>
@@ -79,85 +88,87 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <div className="px-6 py-10 text-center text-[#8b5e3c]">Loading</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-[#8b5e3c]">Loading...</div>
+      </div>
     )
   }
 
   if (!profile) {
     return (
-      <div className="px-6 py-10 max-w-md mx-auto text-center">
-        <p className="text-[#8b5e3c] mb-4">Profile tidak ditemukan</p>
-        <Link href="/" className="text-[#8b5e3c] hover:underline">
-          Kembali ke daftar
-    </Link>
-    </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-[#8b5e3c]">Profile tidak ditemukan</div>
+      </div>
     )
   }
 
   return (
-    <div className="min-h-full px-6 py-10 bg-[#f4eedd]">
-      <div className="max-w-3xl mx-auto">
-        <Link
-          href="/"
-          className="text-sm text-[#8b5e3c] hover:text-[#4a3c31] mb-4 inline-block"
-        >
-          ← Kembali
-    </Link>
-
-        <div className="bg-[#ebe1c9] border border-[#d3c9b0] rounded-xl p-6 shadow-sm mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-[#8b5e3c] flex items-center justify-center text-[#f4eedd] font-bold text-2xl">
-              {profile.name.charAt(0).toUpperCase()}
+    <div className="min-h-screen px-6 py-8">
+      <div className="max-w-4xl mx-auto">
+        <header className="diary-card rounded-2xl p-6 mb-8 flex items-center gap-6">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#8b5e3c] to-[#5d3f25] flex items-center justify-center text-[#f1e7d0] font-bold text-3xl shadow-md">
+            {profile.name.charAt(0).toUpperCase()}
           </div>
-            <div>
-              <h1 className="text-2xl font-bold text-[#4a3c31]">
-                {profile.name}
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-[#4a3c31] handwriting">
+              {profile.name}
             </h1>
-              <p className="text-sm text-[#8b5e3c]">
-                Dibuat {new Date(profile.created_at).toLocaleDateString('id-ID')}
+            <p className="text-sm text-[#8b5e3c]">
+              {new Date(profile.created_at).toLocaleDateString('id-ID')}
             </p>
           </div>
-        </div>
-      </div>
+          <button
+            onClick={() => {
+              localStorage.removeItem('jurnal-session')
+              window.location.href = '/'
+            }}
+            className="text-[#8b5e3c] hover:text-red-700 text-sm px-4 py-2 rounded-lg border border-[#d3c9b0] hover:border-red-300 transition"
+          >
+            Logout
+          </button>
+        </header>
 
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-[#4a3c31]">
             Jurnal Harian ({entries.length})
-        </h2>
+          </h2>
           <button
             onClick={() => setShowForm((s) => !s)}
-            className="bg-[#8b5e3c] text-[#f4eedd] px-3 py-1.5 rounded-lg text-sm font-medium hover:opacity-90 transition"
+            className="bg-[#8b5e3c] text-[#f1e7d0] px-4 py-2 rounded-xl font-semibold hover:bg-[#5d3f25] transition flex items-center gap-2"
           >
-            {showForm ? 'Tutup' : '+ Tambah Entry'}
-        </button>
-      </div>
+            <span>+</span> Tambah Entry
+          </button>
+        </div>
 
         {showForm && (
-          <JurnalForm
-            profileId={id}
-            onSuccess={() => setShowForm(false)}
-          />
+          <div className="mb-8">
+            <JurnalForm profileId={id} onSuccess={() => setShowForm(false)} />
+          </div>
         )}
 
         {entries.length === 0 ? (
-          <div className="bg-[#ebe1c9] border border-[#d3c9b0] border-dashed rounded-xl p-10 text-center">
+          <div className="diary-card rounded-2xl p-12 text-center">
             <p className="text-[#8b5e3c]">
-              Belum ada jurnal entry. Tambah day 1 pertama.
-          </p>
-        </div>
+              Belum ada jurnal entry. Klik tombol di atas untuk menambah.
+            </p>
+          </div>
         ) : (
           <div className="space-y-4">
             {entries.map((entry) => (
               <JurnalEntryCard
                 key={entry.id}
                 entry={entry}
-                onDelete={() => handleDelete(entry.id)}
+                onDelete={() => {
+                  if (!confirm('Hapus entry ini?')) return
+                  supabase.from('jurnal_entries').delete().eq('id', entry.id)
+                  setEntries((prev) => prev.filter((e) => e.id !== entry.id))
+                }}
                 onChanged={handleEntryChanged}
               />
             ))}
           </div>
         )}
+      </div>
     </div>
-  </div>
   )
 }

@@ -1,6 +1,8 @@
 export type Profile = {
   id: string
   name: string
+  password: string
+  avatar_url: string | null
   created_at: string
 }
 
