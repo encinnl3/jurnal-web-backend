@@ -52,10 +52,9 @@ export default function Home() {
 
         <div className="grid gap-6 sm:grid-cols-3">
           {profiles.map((profile) => (
-            <button
+            <div
               key={profile.id}
-              onClick={() => router.push(`/login/${profile.id}`)}
-              className="diary-card rounded-2xl p-8 hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col items-center gap-4"
+              className="diary-card rounded-2xl p-8 flex flex-col items-center gap-4"
             >
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#8b5e3c] to-[#5d3f25] flex items-center justify-center text-[#f1e7d0] font-bold text-3xl shadow-md">
                 {profile.name.charAt(0).toUpperCase()}
@@ -63,8 +62,21 @@ export default function Home() {
               <h2 className="font-semibold text-xl text-[#4a3c31] handwriting">
                 {profile.name}
               </h2>
-              <span className="stamp">masuk</span>
-            </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => router.push(`/login/${profile.id}`)}
+                  className="stamp hover:bg-[#8b5e3c] hover:text-[#f1e7d0] transition cursor-pointer"
+                >
+                  masuk
+                </button>
+                <button
+                  onClick={() => router.push(`/visitor/${profile.id}`)}
+                  className="stamp hover:bg-[#5d3f25] hover:text-[#f1e7d0] transition cursor-pointer"
+                >
+                  lihat
+                </button>
+              </div>
+            </div>
           ))}
         </div>
 
