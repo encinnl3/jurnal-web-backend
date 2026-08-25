@@ -13,3 +13,11 @@ drop table if exists public.jurnal_entries; drop table if exists public.profiles
 - **Farhan**: `farhan123`
 - **Akmal**: `akmal123`
 - **Janandra**: `janandra123`
+
+## Alur Aplikasi
+
+1. **Landing Page**: Tampil 3 profil (Farhan, Akmal, Janandra)
+2. **Klik Profil** → Masuk ke halaman visitor (hanya lihat jurnal)
+3. **Tombol Admin** → Modal password muncul
+4. **Password Benar** → Masuk ke Dashboard Admin (tambah/edit/hapus jurnal, ganti password, upload avatar)
+5. **Keluar dari Admin** → Kembali ke visitor mode
