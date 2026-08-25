@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabaseClient'
 import type { Profile, JurnalEntry } from '@/lib/types'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default function VisitorPage({ params }: { params: { id: string } }) {
   const { id } = params
   const [profile, setProfile] = useState<Profile | null>(null)

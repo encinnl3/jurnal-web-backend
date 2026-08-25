@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabaseClient'
 import type { Profile } from '@/lib/types'
 import { useSession } from '@/components/SessionProvider'
 
+export const dynamic = 'force-dynamic'
+
 export default function Home() {
   const router = useRouter()
   const { session } = useSession()

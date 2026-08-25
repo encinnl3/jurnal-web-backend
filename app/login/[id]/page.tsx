@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/components/SessionProvider'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default function LoginPage({ params }: { params: { id: string } }) {
   const { id } = params
   const router = useRouter()

@@ -9,6 +9,8 @@ import JurnalEntryCard from '@/components/JurnalEntryCard'
 import AdminDashboard from '@/components/AdminDashboard'
 import { useSession } from '@/components/SessionProvider'
 
+export const dynamic = 'force-dynamic'
+
 export default function ProfilePage({ params }: { params: { id: string } }) {
   const { id } = params
   const { session } = useSession()
