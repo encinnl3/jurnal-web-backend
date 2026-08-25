@@ -17,84 +17,57 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
 
   useEffect(() => {
     const session = localStorage.getItem('jurnal-session')
-    if (!session) {
-      window.location.href = `/visitor/${id}`
-      return
-    }
+    if (!session) { window.location.href = `/visitor/${id}`; return }
     const { profileId } = JSON.parse(session)
-    if (profileId !== id) {
-      window.location.href = `/visitor/${id}`
-      return
-    }
+    if (profileId !== id) { window.location.href = `/visitor/${id}`; return }
     setIsAdmin(true)
   }, [id])
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: profileData } = await (supabase.from('profiles') as any)
-        .select('*')
-        .eq('id', id)
+      const { data: profileData } = await (supabase.from('profiles') as any).select('*').eq('id', id)
       if (profileData?.length > 0) setProfile(profileData[0])
-
-      const { data: entryData } = await (supabase.from('jurnal_entries') as any)
-        .select('*')
-        .eq('profile_id', id)
-        .order('day', { ascending: true })
+      const { data: entryData } = await (supabase.from('jurnal_entries') as any).select('*').eq('profile_id', id).order('day', { ascending: true })
       setEntries(entryData || [])
       setLoading(false)
     }
     fetchData()
-
-    const channel = supabase
-      .channel(`jurnal-${id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'jurnal_entries', filter: `profile_id=eq.${id}` }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          setEntries((prev) => {
-            if (prev.find((e) => e.id === (payload.new as JurnalEntry).id)) return prev
-            return [...prev, payload.new as JurnalEntry].sort((a, b) => a.day - b.day)
-          })
-        } else if (payload.eventType === 'UPDATE') {
-          setEntries((prev) => prev.map((e) => e.id === (payload.new as JurnalEntry).id ? (payload.new as JurnalEntry) : e))
-        } else if (payload.eventType === 'DELETE') {
-          setEntries((prev) => prev.filter((e) => e.id !== (payload.old as JurnalEntry).id))
-        }
-      })
-      .subscribe()
+    const channel = supabase.channel(`admin-${id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'jurnal_entries', filter: `profile_id=eq.${id}` }, (payload) => {
+      if (payload.eventType === 'INSERT') setEntries((prev) => [...prev, payload.new as JurnalEntry].sort((a, b) => a.day - b.day))
+      else if (payload.eventType === 'UPDATE') setEntries((prev) => prev.map((e) => e.id === (payload.new as JurnalEntry).id ? (payload.new as JurnalEntry) : e))
+      else if (payload.eventType === 'DELETE') setEntries((prev) => prev.filter((e) => e.id !== (payload.old as JurnalEntry).id))
+    }).subscribe()
     return () => supabase.removeChannel(channel)
   }, [id])
 
-  if (loading || !isAdmin) return <div className="container-app py-20 text-center text-fg-muted">Loading...</div>
-  if (!profile) return <div className="container-app py-20 text-center">Profile tidak ditemukan</div>
+  if (loading || !isAdmin) return <div className="flex items-center justify-center min-h-screen text-fg-muted">Loading...</div>
+  if (!profile) return <div className="flex items-center justify-center min-h-screen">Profile tidak ditemukan</div>
 
   return (
-    <div className="container-app py-8">
-      <div className="card p-6 mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="avatar-lg">
-              {profile.avatar_url ? <img src={profile.avatar_url} alt={profile.name} /> : profile.name.charAt(0).toUpperCase()}
-            </div>
-            <h1 className="text-2xl font-bold">{profile.name}</h1>
+    <div className="max-w-2xl mx-auto p-6 py-10">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl overflow-hidden shadow-sm">
+            {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : profile.name.charAt(0)}
           </div>
-          <button onClick={() => { localStorage.removeItem('jurnal-session'); window.location.href = `/visitor/${id}` }} className="btn btn-ghost btn-sm">
-            Keluar
-          </button>
+          <h1 className="text-3xl font-bold display">{profile.name}</h1>
         </div>
+        <button onClick={() => { localStorage.removeItem('jurnal-session'); window.location.href = `/visitor/${id}` }} className="btn btn-md btn-ghost">Keluar</button>
       </div>
 
       <AdminDashboard profile={profile} entriesCount={entries.length} onProfileUpdate={(p) => setProfile(p)} />
 
-      <div className="flex items-center justify-between mb-6 mt-10">
+      <div className="flex items-center justify-between mb-5 mt-10">
         <h2 className="text-xl font-bold">Jurnal ({entries.length})</h2>
-        <button onClick={() => setShowForm((s) => !s)} className="btn btn-primary btn-sm">
+        <button onClick={() => setShowForm((s) => !s)} className="btn btn-md btn-primary">
           {showForm ? 'Tutup' : '+ Tambah'}
         </button>
       </div>
 
-      {showForm && <div className="mb-8"><JurnalForm profileId={id} onSuccess={() => setShowForm(false)} /></div>}
+      {showForm && <div className="mb-6"><JurnalForm profileId={id} onSuccess={() => setShowForm(false)} /></div>}
 
       {entries.length === 0 ? (
-        <div className="card p-12 text-center text-fg-muted">Belum ada jurnal</div>
+        <div className="card text-center p-16 text-fg-muted">Belum ada jurnal</div>
       ) : (
         <div className="space-y-4">
           {entries.map((entry) => (
