@@ -35,57 +35,55 @@ export default function Home() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-[#8b5e3c] text-lg">Loading...</div>
+        <div className="text-fg-secondary">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-12">
-      <div className="w-full max-w-2xl">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-[#4a3c31] mb-3 handwriting">
+    <div className="min-h-screen bg-pattern py-20">
+      <div className="container-app">
+        <div className="text-center mb-16 animate-in">
+          <h1 className="text-6xl title-display text-gradient mb-6">
             Jurnal PKL
           </h1>
-          <p className="text-[#8b5e3c] text-lg">
-            Pilih profil untuk masuk
+          <p className="text-xl text-fg-secondary max-w-lg mx-auto">
+            Selamat datang! Pilih profil Anda untuk memulai perjalanan jurnal hari ini.
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-3">
-          {profiles.map((profile) => (
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+          {profiles.map((profile, index) => (
             <div
               key={profile.id}
-              className="diary-card rounded-2xl p-8 flex flex-col items-center gap-4"
+              className={`card card-elevated p-8 flex flex-col items-center gap-6 animate-in animate-delay-${(index % 3) + 1}`}
             >
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#8b5e3c] to-[#5d3f25] flex items-center justify-center text-[#f1e7d0] font-bold text-3xl shadow-md">
-                {profile.name.charAt(0).toUpperCase()}
+              <div className="avatar avatar-lg shadow-lg">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt={profile.name} className="w-full h-full object-cover" />
+                ) : (
+                  profile.name.charAt(0).toUpperCase()
+                )}
               </div>
-              <h2 className="font-semibold text-xl text-[#4a3c31] handwriting">
+              <h2 className="text-2xl font-bold text-fg-primary title-display">
                 {profile.name}
               </h2>
-              <div className="flex gap-2">
+              <div className="flex gap-3 w-full">
                 <button
                   onClick={() => router.push(`/login/${profile.id}`)}
-                  className="stamp hover:bg-[#8b5e3c] hover:text-[#f1e7d0] transition cursor-pointer"
+                  className="btn btn-primary flex-1"
                 >
-                  masuk
+                  Masuk
                 </button>
                 <button
                   onClick={() => router.push(`/visitor/${profile.id}`)}
-                  className="stamp hover:bg-[#5d3f25] hover:text-[#f1e7d0] transition cursor-pointer"
+                  className="btn btn-secondary flex-1"
                 >
-                  lihat
+                  Lihat
                 </button>
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="mt-12 text-center">
-          <p className="text-sm text-[#8b5e3c]">
-            Klik profil untuk login
-          </p>
         </div>
       </div>
     </div>

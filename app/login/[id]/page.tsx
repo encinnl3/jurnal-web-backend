@@ -15,15 +15,15 @@ export default function LoginPage({ params }: { params: { id: string } }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [profileName, setProfileName] = useState('')
+  const [profile, setProfile] = useState<{name: string, avatar_url: string|null} | null>(null)
 
   useEffect(() => {
     ;(async () => {
       const { data } = await (supabase.from('profiles') as any)
-        .select('name')
+        .select('name, avatar_url')
         .eq('id', id)
         .single()
-      if (data) setProfileName(data.name)
+      if (data) setProfile(data)
     })()
   }, [id])
 
@@ -54,55 +54,41 @@ export default function LoginPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-        <Link
-          href="/"
-          className="text-sm text-[#8b5e3c] hover:text-[#4a3c31] mb-6 inline-block"
-        >
-          ← Kembali
+    <div className="min-h-screen flex items-center justify-center p-6 bg-pattern">
+      <div className="w-full max-w-md animate-in">
+        <Link href="/" className="btn btn-ghost mb-8 text-sm text-fg-secondary">
+          ← Kembali ke Beranda
         </Link>
 
-        <div className="diary-card rounded-2xl p-8">
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#8b5e3c] to-[#5d3f25] flex items-center justify-center text-[#f1e7d0] font-bold text-2xl shadow-md mx-auto mb-4">
-              {profileName?.charAt(0)?.toUpperCase() || '?'}
-            </div>
-            <h1 className="text-2xl font-bold text-[#4a3c31] handwriting">
-              {profileName || 'Loading...'}
-            </h1>
-            <p className="text-sm text-[#8b5e3c] mt-1">
-              Masukkan password untuk login
-            </p>
+        <div className="card p-10 text-center">
+          <div className="avatar avatar-lg mx-auto mb-6 shadow-md">
+            {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="avatar" />
+            ) : (
+                profile?.name?.charAt(0)?.toUpperCase()
+            )}
           </div>
+          <h1 className="text-3xl title-display mb-2">{profile?.name || '...'}</h1>
+          <p className="text-fg-secondary mb-8">Masukkan password Anda</p>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4 text-left">
             <div>
+              <label className="label">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                className="w-full px-4 py-3 border border-[#d3c9b0] rounded-xl bg-[#fbf6e9] text-[#4a3c31] focus:outline-none focus:ring-2 focus:ring-[#8b5e3c] placeholder:text-[#a89a85]"
+                placeholder="••••••"
+                className="input"
               />
             </div>
 
-            {error && (
-              <p className="text-sm text-red-700 text-center">{error}</p>
-            )}
+            {error && <p className="message message-error">{error}</p>}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#8b5e3c] text-[#f1e7d0] px-4 py-3 rounded-xl font-semibold hover:bg-[#5d3f25] transition disabled:opacity-50"
-            >
-              {loading ? 'Memproses...' : 'Masuk'}
+            <button type="submit" disabled={loading} className="btn btn-primary w-full">
+              {loading ? 'Masuk...' : 'Masuk ke Dashboard'}
             </button>
           </form>
-
-          <p className="text-xs text-center text-[#8b5e3c] mt-6">
-            Lupa password? Hubungi admin.
-          </p>
         </div>
       </div>
     </div>

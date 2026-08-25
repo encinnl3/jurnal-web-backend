@@ -22,33 +22,17 @@ export default function AdminDashboard({
   const [success, setSuccess] = useState('')
 
   const handlePasswordChange = async () => {
-    if (!newPassword) {
-      setError('Password baru wajib diisi')
-      return
-    }
-    if (newPassword !== confirmPassword) {
-      setError('Konfirmasi password tidak cocok')
-      return
-    }
-    if (newPassword.length < 6) {
-      setError('Password minimal 6 karakter')
-      return
-    }
+    if (!newPassword) { setError('Password baru wajib diisi'); return }
+    if (newPassword !== confirmPassword) { setError('Konfirmasi password tidak cocok'); return }
+    if (newPassword.length < 6) { setError('Password minimal 6 karakter'); return }
 
     setSaving(true)
     setError('')
-
-    const { error } = await (supabase.from('profiles') as any)
-      .update({ password: newPassword })
-      .eq('id', profile.id)
-
+    const { error: e } = await (supabase.from('profiles') as any)
+      .update({ password: newPassword }).eq('id', profile.id)
     setSaving(false)
 
-    if (error) {
-      setError(error.message)
-      return
-    }
-
+    if (e) { setError(e.message); return }
     setSuccess('Password berhasil diubah!')
     setNewPassword('')
     setConfirmPassword('')
@@ -57,37 +41,21 @@ export default function AdminDashboard({
 
   const handleAvatarUpload = async () => {
     if (!avatarFile) return
-
     setSaving(true)
     setError('')
 
     const ext = avatarFile.name.split('.').pop()
     const fileName = `${profile.id}/avatar.${ext}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(fileName, avatarFile, { upsert: true })
-
-    if (uploadError) {
-      setError(uploadError.message)
-      setSaving(false)
-      return
-    }
+    const { error: ue } = await supabase.storage.from('avatars').upload(fileName, avatarFile, { upsert: true })
+    if (ue) { setError(ue.message); setSaving(false); return }
 
     const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
     const avatarUrl = data.publicUrl
-
-    const { error: updateError } = await (supabase.from('profiles') as any)
-      .update({ avatar_url: avatarUrl })
-      .eq('id', profile.id)
-
+    const { error: ue2 } = await (supabase.from('profiles') as any)
+      .update({ avatar_url: avatarUrl }).eq('id', profile.id)
     setSaving(false)
 
-    if (updateError) {
-      setError(updateError.message)
-      return
-    }
-
+    if (ue2) { setError(ue2.message); return }
     onProfileUpdate({ ...profile, avatar_url: avatarUrl })
     setAvatarFile(null)
     setSuccess('Avatar berhasil diubah!')
@@ -95,90 +63,62 @@ export default function AdminDashboard({
   }
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <div className="bg-[#ebe1c9] px-4 py-2 rounded-lg border border-[#d3c9b0]">
-            <span className="text-xs text-[#8b5e3c]">Total Entry</span>
-            <p className="text-2xl font-bold text-[#4a3c31]">{entriesCount}</p>
+    <div className="animate-in">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex gap-4">
+          <div className="stat-card">
+            <div className="stat-value">{entriesCount}</div>
+            <div className="stat-label">Total Entry</div>
           </div>
-          <div className="bg-[#ebe1c9] px-4 py-2 rounded-lg border border-[#d3c9b0]">
-            <span className="text-xs text-[#8b5e3c]">Bergabung</span>
-            <p className="text-sm font-semibold text-[#4a3c31]">
+          <div className="stat-card">
+            <div className="stat-value" style={{fontSize: 16, marginTop: 6}}>
               {new Date(profile.created_at).toLocaleDateString('id-ID')}
-            </p>
+            </div>
+            <div className="stat-label">Bergabung</div>
           </div>
         </div>
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="text-[#8d6e63] hover:text-[#5d4037] text-sm px-4 py-2 rounded-xl border border-[#d3c9b0] hover:border-[#8d6e63] transition font-medium"
+          className="btn btn-secondary"
         >
-          {showSettings ? 'Tutup Pengaturan' : '⚙ Pengaturan Admin'}
+          {showSettings ? 'Tutup' : '⚙ Pengaturan'}
         </button>
       </div>
 
       {showSettings && (
-        <div className="diary-card rounded-2xl p-6 space-y-6">
-          <h3 className="font-semibold text-lg text-[#4a3c31] border-b border-[#d3c9b0] pb-2">
-            Pengaturan Admin
-          </h3>
+        <div className="card p-8 animate-in">
+          <h3 className="text-xl title-display mb-6">Pengaturan Admin</h3>
 
-          {error && <p className="text-sm text-red-700 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-          {success && <p className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">{success}</p>}
+          {error && <p className="message message-error mb-4">{error}</p>}
+          {success && <p className="message message-success mb-4">{success}</p>}
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h4 className="font-medium text-[#4a3c31] mb-3">Ganti Avatar</h4>
+              <h4 className="font-semibold mb-4">Ubah Avatar</h4>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#8b5e3c] to-[#5d3f25] flex items-center justify-center text-[#f1e7d0] font-bold text-xl shadow-md overflow-hidden">
+                <div className="avatar shadow-md">
                   {profile.avatar_url ? (
-                    <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                    <img src={profile.avatar_url} alt="avatar" />
                   ) : (
                     profile.name.charAt(0).toUpperCase()
                   )}
                 </div>
                 <div className="flex-1">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
-                    className="text-sm text-[#4a3c31] file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#8b5e3c] file:text-[#f1e7d0] file:cursor-pointer"
-                  />
+                  <input type="file" accept="image/*" onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} className="text-sm text-fg-secondary" />
                   {avatarFile && (
-                    <button
-                      onClick={handleAvatarUpload}
-                      disabled={saving}
-                      className="mt-2 text-sm bg-[#8b5e3c] text-[#f1e7d0] px-3 py-1.5 rounded-lg hover:bg-[#5d3f25] transition disabled:opacity-50"
-                    >
-                      {saving ? 'Mengunggah...' : 'Upload'}
+                    <button onClick={handleAvatarUpload} disabled={saving} className="btn btn-primary btn-sm mt-3">
+                      {saving ? 'Uploading...' : 'Upload'}
                     </button>
                   )}
                 </div>
               </div>
             </div>
-
             <div>
-              <h4 className="font-medium text-[#4a3c31] mb-3">Ganti Password</h4>
+              <h4 className="font-semibold mb-4">Ubah Password</h4>
               <div className="space-y-3">
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Password baru"
-                  className="w-full px-3 py-2 border border-[#d3c9b0] rounded-lg bg-[#fbf6e9] text-[#4a3c31] focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
-                />
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Konfirmasi password"
-                  className="w-full px-3 py-2 border border-[#d3c9b0] rounded-lg bg-[#fbf6e9] text-[#4a3c31] focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
-                />
-                <button
-                  onClick={handlePasswordChange}
-                  disabled={saving}
-                  className="w-full bg-[#8b5e3c] text-[#f1e7d0] px-4 py-2 rounded-lg font-semibold hover:bg-[#5d3f25] transition disabled:opacity-50"
-                >
+                <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Password baru" className="input" />
+                <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Konfirmasi password" className="input" />
+                <button onClick={handlePasswordChange} disabled={saving} className="btn btn-primary w-full">
                   {saving ? 'Menyimpan...' : 'Simpan Password'}
                 </button>
               </div>

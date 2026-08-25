@@ -4,16 +4,16 @@ import { SessionProvider } from "@/components/SessionProvider";
 
 export const metadata: Metadata = {
   title: "Jurnal PKL",
-  description: "Website jurnal PKL dengan Supabase realtime",
+  description: "Jurnal PKL with Supabase Realtime",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className="h-full antialiased scroll-smooth">
+    <html lang="id" className="scroll-smooth">
       <head>
-        <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="min-h-full flex flex-col bg-[#f1e7d0]">
+      <body className="min-h-full flex flex-col bg-bg-primary">
         <SessionProvider>
           {children}
         </SessionProvider>

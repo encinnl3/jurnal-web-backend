@@ -20,16 +20,12 @@ export default function JurnalForm({
 
   const uploadFoto = async (file: File): Promise<string | null> => {
     const compressed = await compressImage(file, 1000, 0.75)
-    const ext = 'jpg'
-    const fileName = `${profileId}/${Date.now()}.${ext}`
-    const { error } = await supabase.storage
+    const fileName = `${profileId}/${Date.now()}.jpg`
+    const { error: e } = await supabase.storage
       .from('jurnal-foto')
       .upload(fileName, compressed, { upsert: true })
 
-    if (error) {
-      setError(`Upload foto gagal: ${error.message}`)
-      return null
-    }
+    if (e) { setError(`Upload foto gagal: ${e.message}`); return null }
 
     const { data } = supabase.storage.from('jurnal-foto').getPublicUrl(fileName)
     return data.publicUrl
@@ -37,10 +33,7 @@ export default function JurnalForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim() || !deskripsi.trim()) {
-      setError('Title dan deskripsi wajib diisi')
-      return
-    }
+    if (!title.trim() || !deskripsi.trim()) { setError('Judul dan deskripsi wajib diisi'); return }
 
     setLoading(true)
     setError(null)
@@ -48,26 +41,15 @@ export default function JurnalForm({
     let fotoUrl: string | null = null
     if (foto) {
       fotoUrl = await uploadFoto(foto)
-      if (!fotoUrl) {
-        setLoading(false)
-        return
-      }
+      if (!fotoUrl) { setLoading(false); return }
     }
 
-    const { error: insertError } = await (supabase.from('jurnal_entries') as any).insert({
-      profile_id: profileId,
-      day,
-      title: title.trim(),
-      deskripsi: deskripsi.trim(),
-      foto_url: fotoUrl,
+    const { error: ie } = await (supabase.from('jurnal_entries') as any).insert({
+      profile_id: profileId, day, title: title.trim(), deskripsi: deskripsi.trim(), foto_url: fotoUrl,
     })
 
     setLoading(false)
-
-    if (insertError) {
-      setError(insertError.message)
-      return
-    }
+    if (ie) { setError(ie.message); return }
 
     setDay(day + 1)
     setTitle('')
@@ -77,82 +59,40 @@ export default function JurnalForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="diary-card rounded-2xl p-6 space-y-5"
-    >
-      <div className="flex items-center gap-3 mb-2">
-        <span className="stamp">New Entry</span>
-        <div className="h-px flex-1 bg-[#d3c9b0]" />
+    <form onSubmit={handleSubmit} className="card p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <span className="badge">New Entry</span>
+        <div className="h-px flex-1 bg-card-border" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-[#5d4037] mb-1.5">
-            Day
-          </label>
-          <input
-            type="number"
-            min={1}
-            value={day}
-            onChange={(e) => setDay(parseInt(e.target.value) || 1)}
-            className="w-full px-4 py-2.5 border border-[#efebe9] rounded-xl bg-[#fff8e7] text-[#3e2723] focus:ring-2 focus:ring-[#8d6e63] transition"
-          />
+          <label className="label">Day</label>
+          <input type="number" min={1} value={day} onChange={(e) => setDay(parseInt(e.target.value) || 1)} className="input" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#5d4037] mb-1.5">
-            Foto (otomatis kompres)
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setFoto(e.target.files?.[0] || null)}
-            className="w-full text-sm text-[#5d4037] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#8d6e63] file:text-white file:cursor-pointer file:font-medium"
-          />
+          <label className="label">Foto (otomatis kompres)</label>
+          <input type="file" accept="image/*" onChange={(e) => setFoto(e.target.files?.[0] || null)} className="input text-sm" />
         </div>
       </div>
 
       {foto && (
-        <div className="flex items-center gap-2 text-xs text-[#8d6e63] bg-[#fff3e0] px-3 py-2 rounded-lg">
-          <span>&#128247;</span> {foto.name} - akan dikompres otomatis
-        </div>
+        <div className="message message-success mb-4">📷 {foto.name} — akan dikompres otomatis</div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-[#5d4037] mb-1.5">
-          Judul
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Contoh: Pengenalan Lingkungan Kerja"
-          className="w-full px-4 py-2.5 border border-[#efebe9] rounded-xl bg-[#fff8e7] text-[#3e2723] focus:ring-2 focus:ring-[#8d6e63] transition"
-        />
+      <div className="mb-6">
+        <label className="label">Judul</label>
+        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul jurnal hari ini" className="input" />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-[#5d4037] mb-1.5">
-          Cerita Hari Ini
-        </label>
-        <textarea
-          value={deskripsi}
-          onChange={(e) => setDeskripsi(e.target.value)}
-          rows={5}
-          placeholder="Tuliskan kegiatan hari ini secara detail..."
-          className="w-full px-4 py-2.5 border border-[#efebe9] rounded-xl bg-[#fff8e7] text-[#3e2723] focus:ring-2 focus:ring-[#8d6e63] transition paper-lines"
-        />
+      <div className="mb-6">
+        <label className="label">Cerita Hari Ini</label>
+        <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows={5} placeholder="Tuliskan kegiatan hari ini..." className="input" />
       </div>
 
-      {error && (
-        <p className="text-sm text-red-700 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
-      )}
+      {error && <p className="message message-error mb-4">{error}</p>}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full btn-primary px-5 py-3 rounded-xl font-semibold text-base disabled:opacity-50"
-      >
+      <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full">
         {loading ? 'Menyimpan...' : 'Simpan Entry'}
       </button>
     </form>

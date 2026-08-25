@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { Profile, JurnalEntry } from '@/lib/types'
-import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,7 +64,7 @@ export default function VisitorPage({ params }: { params: { id: string } }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-[#8b5e3c]">Loading...</div>
+        <div className="text-fg-secondary">Loading...</div>
       </div>
     )
   }
@@ -73,67 +72,51 @@ export default function VisitorPage({ params }: { params: { id: string } }) {
   if (!profile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-[#8b5e3c]">Profile tidak ditemukan</div>
+        <div className="text-fg-secondary">Profile tidak ditemukan</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen px-6 py-8">
-      <div className="max-w-3xl mx-auto">
-        <header className="diary-card rounded-2xl p-6 mb-8 flex items-center gap-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#8b5e3c] to-[#5d3f25] flex items-center justify-center text-[#f1e7d0] font-bold text-3xl shadow-md">
-            {profile.name.charAt(0).toUpperCase()}
+    <div className="min-h-screen py-10 bg-pattern">
+      <div className="container-app max-w-3xl">
+        <a href="/" className="btn btn-ghost text-sm mb-8">← Kembali</a>
+
+        <header className="card p-8 mb-8 flex items-center gap-6 animate-in">
+          <div className="avatar avatar-lg shadow-md">
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt="avatar" />
+            ) : (
+              profile.name.charAt(0).toUpperCase()
+            )}
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-[#4a3c31] handwriting">
-              {profile.name}
-            </h1>
-            <span className="text-xs text-[#8b5e3c] bg-[#f1e7d0] px-2 py-1 rounded">
-              Mode Baca
-            </span>
+          <div>
+            <span className="badge-outline badge mb-2">Mode Baca</span>
+            <h1 className="text-3xl title-display">{profile.name}</h1>
           </div>
         </header>
 
-        <h2 className="text-lg font-semibold text-[#4a3c31] mb-6">
-          Jurnal Harian ({entries.length})
-        </h2>
+        <h2 className="text-2xl title-display mb-6">Jurnal Harian</h2>
 
         {entries.length === 0 ? (
-          <div className="diary-card rounded-2xl p-12 text-center">
-            <p className="text-[#8b5e3c]">
-              Belum ada jurnal.
-            </p>
+          <div className="card p-12 text-center text-fg-secondary">
+            Belum ada jurnal.
           </div>
         ) : (
-          <div className="space-y-4">
-            {entries.map((entry) => (
-              <div
-                key={entry.id}
-                className="diary-card rounded-2xl overflow-hidden"
-              >
-                <div className="px-5 py-3 border-b border-[#d3c9b0] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="stamp">Day {entry.day}</span>
-                    <h3 className="font-semibold text-[#4a3c31]">
-                      {entry.title}
-                    </h3>
-                  </div>
+          <div className="space-y-6">
+            {entries.map((entry, index) => (
+              <div key={entry.id} className={`card p-0 overflow-hidden animate-in animate-delay-${(index % 3) + 1}`}>
+                <div className="journal-entry p-6 flex items-center gap-3">
+                  <span className="badge">Day {entry.day}</span>
+                  <h3 className="text-xl font-semibold title-display">{entry.title}</h3>
                 </div>
                 {entry.foto_url && (
-                  <img
-                    src={entry.foto_url}
-                    alt={entry.title}
-                    className="w-full h-64 object-cover"
-                  />
+                  <img src={entry.foto_url} alt={entry.title} className="mx-6 rounded-xl" style={{maxHeight: 320, width: 'calc(100% - 48px)', objectFit: 'cover'}} />
                 )}
-                <div className="p-5">
-                  <p className="text-[#4a3c31] whitespace-pre-wrap">
-                    {entry.deskripsi}
-                  </p>
-                  <p className="text-xs text-[#8b5e3c] mt-3">
-                    {new Date(entry.created_at).toLocaleString('id-ID')}
-                  </p>
+                <div className="p-6 pt-4">
+                  <p className="text-fg-secondary leading-relaxed whitespace-pre-wrap">{entry.deskripsi}</p>
+                  <div className="divider" />
+                  <p className="text-sm text-fg-muted">{new Date(entry.created_at).toLocaleString('id-ID')}</p>
                 </div>
               </div>
             ))}
