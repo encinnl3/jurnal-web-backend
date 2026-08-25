@@ -21,32 +21,56 @@ export default function Home() {
     fetchProfiles()
   }, [])
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen text-fg-muted">Loading...</div>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-sm text-[#9c8b78]">
+        Memuat...
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8">
-      <div className="w-full max-w-4xl">
-        <div className="text-center mb-16">
-          <h1 className="display text-5xl mb-3">Jurnal PKL</h1>
-          <p className="text-fg-muted text-lg">Pilih profil untuk melihat jurnal</p>
-        </div>
+    <main className="min-h-screen flex flex-col justify-center py-20">
+      <div className="container-app w-full">
+        <header className="text-center mb-20">
+          <span className="text-xs uppercase tracking-[0.2em] text-[#b89870] font-semibold mb-3 block">
+            Praktik Kerja Lapangan
+          </span>
+          <h1 className="heading-display text-5xl md:text-6xl text-[#2c2418] mb-4">
+            Jurnal PKL
+          </h1>
+          <p className="text-[#6b5c4c] text-base md:text-lg max-w-md mx-auto font-light">
+            Arsip kegiatan harian. Pilih salah satu profil di bawah untuk melihat laporan.
+          </p>
+        </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {profiles.map((profile, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {profiles.map((profile) => (
             <div
               key={profile.id}
-              className="card hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer text-center py-8 px-6"
+              className="card-profile group cursor-pointer"
               onClick={() => router.push(`/visitor/${profile.id}`)}
             >
-              <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-sm overflow-hidden">
-                {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : profile.name.charAt(0)}
+              <div className="w-20 h-20 rounded-full bg-[#f5ede2] flex items-center justify-center text-[#b89870] font-bold text-2xl group-hover:scale-105 transition-transform overflow-hidden border border-[#ece8e1]">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  profile.name.charAt(0)
+                )}
               </div>
-              <h2 className="font-semibold text-lg">{profile.name}</h2>
-              <p className="text-fg-muted text-sm mt-1">Lihat Jurnal →</p>
+              <div className="text-center">
+                <h2 className="heading-display text-xl text-[#2c2418] mb-1">
+                  {profile.name}
+                </h2>
+                <span className="text-xs text-[#9c8b78]">Peserta PKL</span>
+              </div>
+              <button className="btn-main w-full mt-2">
+                Buka Jurnal →
+              </button>
             </div>
           ))}
         </div>
       </div>
-    </div>
+    </main>
   )
 }

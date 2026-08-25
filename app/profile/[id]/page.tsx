@@ -40,36 +40,38 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     return () => supabase.removeChannel(channel)
   }, [id])
 
-  if (loading || !isAdmin) return <div className="flex items-center justify-center min-h-screen text-fg-muted">Loading...</div>
-  if (!profile) return <div className="flex items-center justify-center min-h-screen">Profile tidak ditemukan</div>
+  if (loading || !isAdmin) return <div className="min-h-screen flex items-center justify-center text-sm text-[#9c8b78]">Memuat...</div>
+  if (!profile) return <div className="min-h-screen flex items-center justify-center">Profile tidak ditemukan</div>
 
   return (
-    <div className="max-w-2xl mx-auto p-6 py-10">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl overflow-hidden shadow-sm">
+    <div className="max-w-[800px] mx-auto px-8 py-16">
+      <header className="flex items-center justify-between mb-16">
+        <div className="flex items-center gap-6">
+          <div className="w-16 h-16 rounded-full bg-[#f5ede2] border border-[#ece8e1] flex items-center justify-center text-[#b89870] font-bold text-2xl overflow-hidden">
             {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : profile.name.charAt(0)}
           </div>
-          <h1 className="text-3xl font-bold display">{profile.name}</h1>
+          <h1 className="heading-display text-4xl text-[#2c2418]">{profile.name}</h1>
         </div>
-        <button onClick={() => { localStorage.removeItem('jurnal-session'); window.location.href = `/visitor/${id}` }} className="btn btn-md btn-ghost">Keluar</button>
-      </div>
+        <button onClick={() => { localStorage.removeItem('jurnal-session'); window.location.href = `/visitor/${id}` }} className="text-xs uppercase tracking-[0.1em] font-semibold px-5 py-2.5 border border-[#ece8e1] rounded-md hover:bg-[#f5ede2] transition-colors text-[#6b5c4c]">
+          Keluar
+        </button>
+      </header>
 
       <AdminDashboard profile={profile} entriesCount={entries.length} onProfileUpdate={(p) => setProfile(p)} />
 
-      <div className="flex items-center justify-between mb-5 mt-10">
-        <h2 className="text-xl font-bold">Jurnal ({entries.length})</h2>
-        <button onClick={() => setShowForm((s) => !s)} className="btn btn-md btn-primary">
+      <div className="flex items-center justify-between mb-10 mt-16">
+        <h2 className="heading-display text-2xl text-[#2c2418]">Jurnal ({entries.length})</h2>
+        <button onClick={() => setShowForm((s) => !s)} className="btn-main">
           {showForm ? 'Tutup' : '+ Tambah'}
         </button>
       </div>
 
-      {showForm && <div className="mb-6"><JurnalForm profileId={id} onSuccess={() => setShowForm(false)} /></div>}
+      {showForm && <div className="mb-10"><JurnalForm profileId={id} onSuccess={() => setShowForm(false)} /></div>}
 
       {entries.length === 0 ? (
-        <div className="card text-center p-16 text-fg-muted">Belum ada jurnal</div>
+        <div className="text-center py-20 text-[#9c8b78]">Belum ada jurnal.</div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-10">
           {entries.map((entry) => (
             <JurnalEntryCard
               key={entry.id}

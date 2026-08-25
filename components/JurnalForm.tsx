@@ -4,13 +4,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { compressImage } from '@/lib/imageUtils'
 
-export default function JurnalForm({
-  profileId,
-  onSuccess,
-}: {
-  profileId: string
-  onSuccess: () => void
-}) {
+export default function JurnalForm({ profileId, onSuccess }: { profileId: string; onSuccess: () => void }) {
   const [day, setDay] = useState(1)
   const [title, setTitle] = useState('')
   const [deskripsi, setDeskripsi] = useState('')
@@ -30,56 +24,42 @@ export default function JurnalForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !deskripsi.trim()) { setError('Judul & deskripsi wajib'); return }
-
-    setLoading(true)
-    setError(null)
-
+    setLoading(true); setError(null)
     let fotoUrl: string | null = null
-    if (foto) {
-      fotoUrl = await uploadFoto(foto)
-      if (!fotoUrl) { setLoading(false); return }
-    }
-
-    const { error: ie } = await (supabase.from('jurnal_entries') as any).insert({
-      profile_id: profileId, day, title: title.trim(), deskripsi: deskripsi.trim(), foto_url: fotoUrl,
-    })
-
+    if (foto) { fotoUrl = await uploadFoto(foto); if (!fotoUrl) { setLoading(false); return } }
+    const { error: ie } = await (supabase.from('jurnal_entries') as any).insert({ profile_id: profileId, day, title: title.trim(), deskripsi: deskripsi.trim(), foto_url: fotoUrl })
     setLoading(false)
     if (ie) { setError(ie.message); return }
-
-    setDay(day + 1)
-    setTitle('')
-    setDeskripsi('')
-    setFoto(null)
-    onSuccess()
+    setDay(day + 1); setTitle(''); setDeskripsi(''); setFoto(null); onSuccess()
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card p-6 space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-[#ece8e1] p-8">
+      <div className="flex items-center gap-4 mb-6">
+        <span className="text-xs uppercase tracking-widest text-[#9c8b78] font-semibold">New Entry</span>
+        <div className="flex-1 h-px bg-[#f5ede2]" />
+      </div>
+      <div className="grid grid-cols-2 gap-4 mb-6">
         <div>
-          <label className="label">Day</label>
-          <input type="number" min={1} value={day} onChange={(e) => setDay(parseInt(e.target.value) || 1)} className="input input-sm" />
+          <label className="text-xs uppercase tracking-widest text-[#9c8b78] mb-2 block">Day</label>
+          <input type="number" min={1} value={day} onChange={(e) => setDay(parseInt(e.target.value) || 1)} className="w-full px-4 py-2.5 bg-[#fdfcf8] border border-[#ece8e1] rounded-lg text-sm focus:outline-none focus:border-[#b89870]" />
         </div>
         <div>
-          <label className="label">Foto</label>
-          <input type="file" accept="image/*" onChange={(e) => setFoto(e.target.files?.[0] || null)} className="input input-sm" />
+          <label className="text-xs uppercase tracking-widest text-[#9c8b78] mb-2 block">Foto</label>
+          <input type="file" accept="image/*" onChange={(e) => setFoto(e.target.files?.[0] || null)} className="w-full text-xs text-[#6b5c4c] py-2" />
         </div>
       </div>
-
-      <div>
-        <label className="label">Judul</label>
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul" className="input input-sm" />
+      <div className="mb-5">
+        <label className="text-xs uppercase tracking-widest text-[#9c8b78] mb-2 block">Judul</label>
+        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul hari ini..." className="w-full px-4 py-2.5 bg-[#fdfcf8] border border-[#ece8e1] rounded-lg text-sm focus:outline-none focus:border-[#b89870]" />
       </div>
-
-      <div>
-        <label className="label">Deskripsi</label>
-        <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows={4} placeholder="Ceritakan kegiatan..." className="input" />
+      <div className="mb-6">
+        <label className="text-xs uppercase tracking-widest text-[#9c8b78] mb-2 block">Deskripsi</label>
+        <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows={4} placeholder="Ceritakan kegiatan..." className="w-full px-4 py-3 bg-[#fdfcf8] border border-[#ece8e1] rounded-lg text-sm focus:outline-none focus:border-[#b89870] resize-none leading-relaxed" />
       </div>
-
-      {error && <p className="message message-error">{error}</p>}
-      <button type="submit" disabled={loading} className="btn btn-primary w-full">
-        {loading ? 'Menyimpan...' : 'Simpan'}
+      {error && <p className="text-xs text-red-500 bg-red-50 p-3 rounded-lg mb-4">{error}</p>}
+      <button type="submit" disabled={loading} className="btn-main w-full">
+        {loading ? 'Menyimpan...' : 'Simpan Entry'}
       </button>
     </form>
   )
