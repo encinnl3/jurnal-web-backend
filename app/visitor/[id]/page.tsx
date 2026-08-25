@@ -1,13 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { Profile, JurnalEntry } from '@/lib/types'
 
-export const dynamic = 'force-dynamic'
-
-export default function VisitorPage({ params }: { params: { id: string } }) {
-  const { id } = params
+export default function VisitorPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [entries, setEntries] = useState<JurnalEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -17,18 +15,22 @@ export default function VisitorPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log('Fetching profile with ID:', id)
-      const profileRes = await (supabase.from('profiles') as any).select('*').eq('id', id).single()
-      console.log('Profile response:', profileRes)
-      
-      const entryRes = await (supabase.from('jurnal_entries') as any)
+      const { data: profileData } = await (supabase.from('profiles') as any)
+        .select('*')
+        .eq('id', id)
+
+      if (profileData && profileData.length > 0) {
+        setProfile(profileData[0])
+      } else {
+        setProfile(null)
+      }
+
+      const { data: entryData } = await (supabase.from('jurnal_entries') as any)
         .select('*')
         .eq('profile_id', id)
         .order('day', { ascending: true })
-      console.log('Entries response:', entryRes)
 
-      setProfile(profileRes.data)
-      setEntries(entryRes.data || [])
+      setEntries(entryData || [])
       setLoading(false)
     }
     fetchData()
@@ -68,16 +70,15 @@ export default function VisitorPage({ params }: { params: { id: string } }) {
 
   const handleAdminLogin = async () => {
     setError('')
-    const { data, error: e } = await (supabase.from('profiles') as any)
-      .select('id, name, password')
-      .eq('id', id)
-      .single()
+    if (!profile) return
 
-    if (e || !data) { setError('Gagal mengambil data profil'); return }
-    if (data.password !== password) { setError('Password salah'); return }
+    if (profile.password !== password) {
+      setError('Password salah')
+      return
+    }
 
-    localStorage.setItem('jurnal-session', JSON.stringify({ profileId: data.id, name: data.name }))
-    window.location.href = `/profile/${data.id}`
+    localStorage.setItem('jurnal-session', JSON.stringify({ profileId: profile.id, name: profile.name }))
+    window.location.href = `/profile/${profile.id}`
   }
 
   if (loading) {
@@ -93,13 +94,7 @@ export default function VisitorPage({ params }: { params: { id: string } }) {
       <div className="flex items-center justify-center min-h-screen p-6">
         <div className="card p-8 max-w-md w-full text-center">
           <h2 className="text-xl font-bold mb-4">Profile tidak ditemukan</h2>
-          <p className="text-fg-secondary mb-4">ID: {id}</p>
-          <p className="text-fg-secondary text-sm mb-4">
-            Kemungkinan: database belum di-setup atau koneksi Supabase bermasalah.
-          </p>
-          <p className="text-fg-secondary text-sm mb-6">
-            Pastikan sudah menjalankan SQL di SETUP_DATABASE.md
-          </p>
+          <p className="text-fg-secondary text-sm mb-6">ID: {id}</p>
           <a href="/" className="btn btn-primary">Kembali ke Beranda</a>
         </div>
       </div>

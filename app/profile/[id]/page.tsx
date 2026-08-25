@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { Profile, JurnalEntry } from '@/lib/types'
 import JurnalForm from '@/components/JurnalForm'
@@ -9,8 +9,8 @@ import AdminDashboard from '@/components/AdminDashboard'
 
 export const dynamic = 'force-dynamic'
 
-export default function ProfilePage({ params }: { params: { id: string } }) {
-  const { id } = params
+export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [entries, setEntries] = useState<JurnalEntry[]>([])
   const [loading, setLoading] = useState(true)
