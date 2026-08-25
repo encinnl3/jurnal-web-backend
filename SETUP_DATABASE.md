@@ -16,8 +16,14 @@ drop table if exists public.jurnal_entries; drop table if exists public.profiles
 
 ## Alur Aplikasi
 
-1. **Landing Page**: Tampil 3 profil (Farhan, Akmal, Janandra)
-2. **Klik Profil** → Masuk ke halaman visitor (hanya lihat jurnal)
-3. **Tombol Admin** → Modal password muncul
-4. **Password Benar** → Masuk ke Dashboard Admin (tambah/edit/hapus jurnal, ganti password, upload avatar)
-5. **Keluar dari Admin** → Kembali ke visitor mode
+1. **Landing Page**: Tampil 3 profil (Farhan, Akmal, Janandra) dengan tombol "Lihat Jurnal"
+2. **Visitor Page**: Hanya bisa lihat jurnal + tombol "Admin" di pojok kanan
+3. **Mode Admin**: Masuk dengan password → bisa tambah/edit/hapus jurnal, ganti password, upload avatar
+4. **Keluar**: Kembali ke visitor mode
+
+## Warna Theme
+
+- Background: Mocha/cream gradient
+- Card: Glassmorphism dengan blur
+- Accent: Tan/warna tanah (bukan ungu/biru)
+- Text: Dark brown (bukan hitam pekat)
