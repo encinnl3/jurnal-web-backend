@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dummy.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://knucpekhuydnlauduipk.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_oNwGU4WKBQe82clUDOFA-g_s4XxfV4n'
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
