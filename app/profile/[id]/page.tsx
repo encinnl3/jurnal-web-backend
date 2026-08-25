@@ -6,6 +6,7 @@ import type { Profile, JurnalEntry } from '@/lib/types'
 import Link from 'next/link'
 import JurnalForm from '@/components/JurnalForm'
 import JurnalEntryCard from '@/components/JurnalEntryCard'
+import AdminDashboard from '@/components/AdminDashboard'
 import { useSession } from '@/components/SessionProvider'
 
 export default function ProfilePage({ params }: { params: { id: string } }) {
@@ -105,16 +106,20 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
   return (
     <div className="min-h-screen px-6 py-8">
       <div className="max-w-4xl mx-auto">
-        <header className="diary-card rounded-2xl p-6 mb-8 flex items-center gap-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#8b5e3c] to-[#5d3f25] flex items-center justify-center text-[#f1e7d0] font-bold text-3xl shadow-md">
-            {profile.name.charAt(0).toUpperCase()}
+        <header className="diary-card rounded-3xl p-8 mb-6 flex items-center gap-6 shadow-sm">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#8d6e63] to-[#5d4037] flex items-center justify-center text-white font-bold text-3xl shadow-md overflow-hidden border-2 border-white">
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+            ) : (
+              profile.name.charAt(0).toUpperCase()
+            )}
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-[#4a3c31] handwriting">
+            <h1 className="text-3xl font-bold text-[#3e2723] glow-text handwriting">
               {profile.name}
             </h1>
-            <p className="text-sm text-[#8b5e3c]">
-              {new Date(profile.created_at).toLocaleDateString('id-ID')}
+            <p className="text-sm text-[#8d6e63]">
+              Bergabung sejak {new Date(profile.created_at).toLocaleDateString('id-ID')}
             </p>
           </div>
           <button
@@ -122,11 +127,17 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
               localStorage.removeItem('jurnal-session')
               window.location.href = '/'
             }}
-            className="text-[#8b5e3c] hover:text-red-700 text-sm px-4 py-2 rounded-lg border border-[#d3c9b0] hover:border-red-300 transition"
+            className="text-[#8d6e63] hover:text-red-700 text-sm px-4 py-2 rounded-xl border border-[#d3c9b0] hover:border-red-300 transition"
           >
             Logout
           </button>
         </header>
+
+        <AdminDashboard
+          profile={profile}
+          entriesCount={entries.length}
+          onProfileUpdate={(p) => setProfile(p)}
+        />
 
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-[#4a3c31]">

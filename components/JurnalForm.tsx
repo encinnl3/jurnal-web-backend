@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { compressImage } from '@/lib/imageUtils'
 
 export default function JurnalForm({
   profileId,
@@ -18,11 +19,12 @@ export default function JurnalForm({
   const [error, setError] = useState<string | null>(null)
 
   const uploadFoto = async (file: File): Promise<string | null> => {
-    const ext = file.name.split('.').pop()
+    const compressed = await compressImage(file, 1000, 0.75)
+    const ext = 'jpg'
     const fileName = `${profileId}/${Date.now()}.${ext}`
     const { error } = await supabase.storage
       .from('jurnal-foto')
-      .upload(fileName, file, { upsert: true })
+      .upload(fileName, compressed, { upsert: true })
 
     if (error) {
       setError(`Upload foto gagal: ${error.message}`)
@@ -77,71 +79,82 @@ export default function JurnalForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-[#ebe1c9] border border-[#d3c9b0] rounded-xl p-5 shadow-sm mb-6 space-y-4"
+      className="diary-card rounded-2xl p-6 space-y-5"
     >
-      <div className="grid grid-cols-2 gap-3">
+      <div className="flex items-center gap-3 mb-2">
+        <span className="stamp">New Entry</span>
+        <div className="h-px flex-1 bg-[#d3c9b0]" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[#4a3c31] mb-1">
+          <label className="block text-sm font-medium text-[#5d4037] mb-1.5">
             Day
-        </label>
+          </label>
           <input
             type="number"
             min={1}
             value={day}
             onChange={(e) => setDay(parseInt(e.target.value) || 1)}
-            className="w-full px-3 py-2 border border-[#d3c9b0] rounded-lg bg-[#f4eedd] text-[#4a3c31] focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
+            className="w-full px-4 py-2.5 border border-[#efebe9] rounded-xl bg-[#fff8e7] text-[#3e2723] focus:ring-2 focus:ring-[#8d6e63] transition"
           />
-      </div>
+        </div>
         <div>
-          <label className="block text-sm font-medium text-[#4a3c31] mb-1">
-            Foto
-        </label>
+          <label className="block text-sm font-medium text-[#5d4037] mb-1.5">
+            Foto (otomatis kompres)
+          </label>
           <input
             type="file"
             accept="image/*"
             onChange={(e) => setFoto(e.target.files?.[0] || null)}
-            className="w-full text-sm text-[#4a3c31] file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-[#8b5e3c] file:text-[#f4eedd] file:cursor-pointer"
+            className="w-full text-sm text-[#5d4037] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#8d6e63] file:text-white file:cursor-pointer file:font-medium"
           />
+        </div>
       </div>
-    </div>
+
+      {foto && (
+        <div className="flex items-center gap-2 text-xs text-[#8d6e63] bg-[#fff3e0] px-3 py-2 rounded-lg">
+          <span>&#128247;</span> {foto.name} - akan dikompres otomatis
+        </div>
+      )}
 
       <div>
-        <label className="block text-sm font-medium text-[#4a3c31] mb-1">
-          Title
-    </label>
+        <label className="block text-sm font-medium text-[#5d4037] mb-1.5">
+          Judul
+        </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Contoh: Pengenalan Lingkungan Kerja"
-          className="w-full px-3 py-2 border border-[#d3c9b0] rounded-lg bg-[#f4eedd] text-[#4a3c31] focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
+          className="w-full px-4 py-2.5 border border-[#efebe9] rounded-xl bg-[#fff8e7] text-[#3e2723] focus:ring-2 focus:ring-[#8d6e63] transition"
         />
-    </div>
+      </div>
 
       <div>
-        <label className="block text-sm font-medium text-[#4a3c31] mb-1">
-          Deskripsi
-    </label>
+        <label className="block text-sm font-medium text-[#5d4037] mb-1.5">
+          Cerita Hari Ini
+        </label>
         <textarea
           value={deskripsi}
           onChange={(e) => setDeskripsi(e.target.value)}
-          rows={4}
-          placeholder="Ceritakan kegiatan hari ini"
-          className="w-full px-3 py-2 border border-[#d3c9b0] rounded-lg bg-[#f4eedd] text-[#4a3c31] focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
+          rows={5}
+          placeholder="Tuliskan kegiatan hari ini secara detail..."
+          className="w-full px-4 py-2.5 border border-[#efebe9] rounded-xl bg-[#fff8e7] text-[#3e2723] focus:ring-2 focus:ring-[#8d6e63] transition paper-lines"
         />
-    </div>
+      </div>
 
       {error && (
-        <p className="text-sm text-red-700">{error}</p>
+        <p className="text-sm text-red-700 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
       )}
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-[#8b5e3c] text-[#f4eedd] px-4 py-2 rounded-lg font-medium hover:opacity-90 transition disabled:opacity-50"
+        className="w-full btn-primary px-5 py-3 rounded-xl font-semibold text-base disabled:opacity-50"
       >
-        {loading ? 'Menyimpan' : 'Simpan Entry'}
-    </button>
-  </form>
+        {loading ? 'Menyimpan...' : 'Simpan Entry'}
+      </button>
+    </form>
   )
 }

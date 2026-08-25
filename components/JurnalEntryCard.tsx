@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { compressImage } from '@/lib/imageUtils'
 import type { JurnalEntry } from '@/lib/types'
 
 export default function JurnalEntryCard({
@@ -22,11 +23,12 @@ export default function JurnalEntryCard({
   const [foto, setFoto] = useState<File | null>(null)
 
   const uploadFoto = async (file: File): Promise<string | null> => {
-    const ext = file.name.split('.').pop()
+    const compressed = await compressImage(file, 1000, 0.75)
+    const ext = 'jpg'
     const fileName = `${entry.profile_id}/${entry.id}-${Date.now()}.${ext}`
     const { error } = await supabase.storage
       .from('jurnal-foto')
-      .upload(fileName, file, { upsert: true })
+      .upload(fileName, compressed, { upsert: true })
 
     if (error) {
       setError(`Upload foto gagal: ${error.message}`)
@@ -101,8 +103,8 @@ export default function JurnalEntryCard({
   }
 
   return (
-    <div className="bg-[#ebe1c9] border border-[#d3c9b0] rounded-xl overflow-hidden shadow-sm">
-      <div className="px-5 py-3 border-b border-[#d3c9b0] flex items-center justify-between">
+    <div className="diary-card rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
+      <div className="px-6 py-4 border-b border-[#efebe9] flex items-center justify-between bg-gradient-to-r from-[#fff8e7] to-transparent">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {editing ? (
             <input
@@ -110,56 +112,54 @@ export default function JurnalEntryCard({
               min={1}
               value={day}
               onChange={(e) => setDay(parseInt(e.target.value) || 1)}
-              className="w-20 px-2 py-1 text-sm border border-[#d3c9b0] rounded bg-[#f4eedd] text-[#4a3c31] focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
+              className="w-20 px-3 py-1.5 text-sm border border-[#efebe9] rounded-lg bg-white text-[#3e2723]"
             />
           ) : (
-            <span className="bg-[#8b5e3c] text-[#f4eedd] text-xs font-bold px-2.5 py-1 rounded">
-              Day {entry.day}
-            </span>
+            <span className="stamp">Day {entry.day}</span>
           )}
           {editing ? (
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Title"
-              className="flex-1 px-2 py-1 text-sm font-semibold border border-[#d3c9b0] rounded bg-[#f4eedd] text-[#4a3c31] focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
+              placeholder="Judul"
+              className="flex-1 px-3 py-1.5 text-base font-semibold border border-[#efebe9] rounded-lg bg-white text-[#3e2723]"
             />
           ) : (
-            <h3 className="font-semibold text-[#4a3c31] truncate">
+            <h3 className="text-lg font-semibold text-[#3e2723] handwriting truncate">
               {entry.title}
             </h3>
           )}
         </div>
-        <div className="flex items-center gap-2 ml-2">
+        <div className="flex items-center gap-2 ml-3">
           {editing ? (
             <>
               <button
                 onClick={handleCancel}
                 disabled={saving}
-                className="text-xs px-2 py-1 text-[#8b5e3c] hover:underline disabled:opacity-50"
+                className="text-xs px-3 py-1.5 text-[#5d4037] hover:bg-[#efebe9] rounded-lg disabled:opacity-50"
               >
                 Batal
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="text-xs px-3 py-1 bg-[#8b5e3c] text-[#f4eedd] rounded font-medium hover:opacity-90 disabled:opacity-50"
+                className="text-xs px-4 py-1.5 btn-primary rounded-lg font-medium disabled:opacity-50"
               >
-                {saving ? 'Menyimpan' : 'Simpan'}
+                {saving ? 'Simpan' : 'Simpan'}
               </button>
             </>
           ) : (
             <>
               <button
                 onClick={() => setEditing(true)}
-                className="text-xs text-[#8b5e3c] hover:underline"
+                className="text-xs px-3 py-1.5 text-[#5d4037] hover:bg-[#efebe9] rounded-lg transition"
               >
                 Edit
               </button>
               <button
                 onClick={onDelete}
-                className="text-xs text-red-700 hover:underline"
+                className="text-xs px-3 py-1.5 text-red-700 hover:bg-red-50 rounded-lg transition"
               >
                 Hapus
               </button>
@@ -169,26 +169,26 @@ export default function JurnalEntryCard({
       </div>
 
       {editing && (
-        <div className="px-5 py-3 border-b border-[#d3c9b0] bg-[#f4eedd]">
+        <div className="px-6 py-4 border-b border-[#efebe9] bg-[#fff8e7]">
           <div className="flex items-center gap-3 flex-wrap">
             {entry.foto_url && !foto && (
               <div className="relative">
                 <img
                   src={entry.foto_url}
                   alt="current"
-                  className="w-20 h-20 object-cover rounded border border-[#d3c9b0]"
+                  className="w-20 h-20 object-cover rounded-xl border-2 border-[#efebe9]"
                 />
                 <button
                   onClick={removeFoto}
-                  className="absolute -top-2 -right-2 bg-red-700 text-[#f4eedd] rounded-full w-5 h-5 text-xs flex items-center justify-center hover:bg-red-800"
+                  className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 text-sm flex items-center justify-center hover:bg-red-700 shadow"
                   type="button"
                 >
-                  ×
+                  &times;
                 </button>
               </div>
             )}
-            <label className="text-xs px-3 py-2 border border-dashed border-[#8b5e3c] rounded cursor-pointer hover:bg-[#ebe1c9] text-[#4a3c31]">
-              {foto ? `Pilih: ${foto.name}` : 'Ganti foto'}
+            <label className="text-xs px-4 py-2.5 border-2 border-dashed border-[#8d6e63] rounded-xl cursor-pointer hover:bg-[#efebe9] text-[#5d4037] font-medium">
+              {foto ? `Pilih: ${foto.name}` : '+ Ganti foto'}
               <input
                 type="file"
                 accept="image/*"
@@ -201,27 +201,36 @@ export default function JurnalEntryCard({
       )}
 
       {entry.foto_url && !editing && (
-        <img src={entry.foto_url} alt={entry.title} className="w-full h-64 object-cover" />
+        <div className="relative">
+          <img
+            src={entry.foto_url}
+            alt={entry.title}
+            className="w-full h-72 object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+        </div>
       )}
 
-      <div className="p-5">
+      <div className="p-6">
         {editing ? (
           <textarea
             value={deskripsi}
             onChange={(e) => setDeskripsi(e.target.value)}
-            rows={5}
-            placeholder="Deskripsi"
-            className="w-full px-3 py-2 border border-[#d3c9b0] rounded-lg bg-[#f4eedd] text-[#4a3c31] focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
+            rows={6}
+            placeholder="Ceritakan kegiatan hari ini..."
+            className="w-full px-4 py-3 border border-[#efebe9] rounded-xl bg-white text-[#3e2723] paper-lines focus:ring-2 focus:ring-[#8d6e63] transition"
           />
         ) : (
-          <p className="text-[#4a3c31] whitespace-pre-wrap">
+          <p className="text-[#3e2723] whitespace-pre-wrap leading-relaxed">
             {entry.deskripsi}
           </p>
         )}
-        <p className="text-xs text-[#8b5e3c] mt-3">
-          {new Date(entry.created_at).toLocaleString('id-ID')}
-        </p>
-        {error && <p className="text-xs text-red-700 mt-2">{error}</p>}
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#efebe9]">
+          <p className="text-xs text-[#8d6e63]">
+            &#128197; {new Date(entry.created_at).toLocaleString('id-ID')}
+          </p>
+        </div>
+        {error && <p className="text-xs text-red-700 bg-red-50 px-3 py-2 rounded-lg mt-3">{error}</p>}
       </div>
     </div>
   )
