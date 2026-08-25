@@ -70,7 +70,7 @@ export default function NewProfilePage() {
           </div>
 
             {error && (
-              <p className="text-sm text-red-700">{error</p>
+              <p className="text-sm text-red-700">{error}</p>
             )}
 
             <button
