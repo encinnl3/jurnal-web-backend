@@ -17,16 +17,18 @@ export default function VisitorPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [{ data: profileData }, { data: entryData }] = await Promise.all([
-        (supabase.from('profiles') as any).select('*').eq('id', id).single(),
-        (supabase.from('jurnal_entries') as any)
-          .select('*')
-          .eq('profile_id', id)
-          .order('day', { ascending: true }),
-      ])
+      console.log('Fetching profile with ID:', id)
+      const profileRes = await (supabase.from('profiles') as any).select('*').eq('id', id).single()
+      console.log('Profile response:', profileRes)
+      
+      const entryRes = await (supabase.from('jurnal_entries') as any)
+        .select('*')
+        .eq('profile_id', id)
+        .order('day', { ascending: true })
+      console.log('Entries response:', entryRes)
 
-      setProfile(profileData)
-      setEntries(entryData || [])
+      setProfile(profileRes.data)
+      setEntries(entryRes.data || [])
       setLoading(false)
     }
     fetchData()
