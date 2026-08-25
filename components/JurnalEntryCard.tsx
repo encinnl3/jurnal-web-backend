@@ -51,8 +51,8 @@ export default function JurnalEntryCard({
       fotoUrl = url
     }
 
-    const { data, error } = await supabase
-      .from('jurnal_entries')
+    const { data, error } = await (supabase
+      .from('jurnal_entries') as any)
       .update({
         day,
         title: title.trim(),
@@ -86,8 +86,8 @@ export default function JurnalEntryCard({
 
   const removeFoto = async () => {
     if (!confirm('Hapus foto?')) return
-    const { data, error } = await supabase
-      .from('jurnal_entries')
+    const { data, error } = await (supabase
+      .from('jurnal_entries') as any)
       .update({ foto_url: null })
       .eq('id', entry.id)
       .select()

@@ -52,7 +52,7 @@ export default function JurnalForm({
       }
     }
 
-    const { error: insertError } = await supabase.from('jurnal_entries').insert({
+    const { error: insertError } = await (supabase.from('jurnal_entries') as any).insert({
       profile_id: profileId,
       day,
       title: title.trim(),

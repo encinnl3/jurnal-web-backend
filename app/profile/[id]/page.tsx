@@ -17,9 +17,9 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     const fetchData = async () => {
       const [{ data: profileData }, { data: entryData }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', id).single(),
-        supabase
-          .from('jurnal_entries')
+        (supabase.from('profiles') as any).select('*').eq('id', id).single(),
+        (supabase
+          .from('jurnal_entries') as any)
           .select('*')
           .eq('profile_id', id)
           .order('day', { ascending: true }),
@@ -68,7 +68,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
 
   const handleDelete = async (entryId: string) => {
     if (!confirm('Hapus entry ini?')) return
-    await supabase.from('jurnal_entries').delete().eq('id', entryId)
+    await (supabase.from('jurnal_entries') as any).delete().eq('id', entryId)
   }
 
   const handleEntryChanged = (updated: JurnalEntry) => {

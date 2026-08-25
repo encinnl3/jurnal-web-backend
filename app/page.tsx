@@ -11,8 +11,8 @@ export default function Home() {
 
   useEffect(() => {
     const fetchProfiles = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
+      const { data, error } = await (supabase
+        .from('profiles') as any)
         .select('*')
         .order('created_at', { ascending: false })
 

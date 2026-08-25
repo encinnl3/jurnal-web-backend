@@ -21,8 +21,8 @@ export default function NewProfilePage() {
     setLoading(true)
     setError(null)
 
-    const { data, error } = await supabase
-      .from('profiles')
+    const { data, error } = await (supabase
+      .from('profiles') as any)
       .insert({ name: name.trim() })
       .select()
       .single()
