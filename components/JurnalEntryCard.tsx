@@ -39,31 +39,31 @@ export default function JurnalEntryCard({ entry, onDelete, onChanged }: { entry:
   }
 
   return (
-    <article className="group">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+    <article className="bg-white rounded-[40px] border border-[#e8e2d9] p-10">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
           {editing ? (
-            <div className="flex gap-2 flex-1">
-              <input type="number" min={1} value={day} onChange={(e) => setDay(parseInt(e.target.value) || 1)} className="w-20 px-3 py-2 bg-white border border-[#ece8e1] rounded-lg text-sm focus:outline-none focus:border-[#b89870]" />
-              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="flex-1 px-3 py-2 bg-white border border-[#ece8e1] rounded-lg text-sm font-semibold focus:outline-none focus:border-[#b89870]" />
+            <div className="flex gap-3 flex-1">
+              <input type="number" min={1} value={day} onChange={(e) => setDay(parseInt(e.target.value) || 1)} className="w-24 px-4 py-2 bg-[#f9f7f2] border border-[#e8e2d9] rounded-full text-sm focus:outline-none focus:border-[#b09678]" />
+              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="flex-1 px-4 py-2 bg-[#f9f7f2] border border-[#e8e2d9] rounded-full text-sm font-semibold focus:outline-none focus:border-[#b09678]" />
             </div>
           ) : (
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] uppercase tracking-widest text-[#9c8b78] font-semibold">Day {entry.day}</span>
-              <h2 className="heading-display text-2xl text-[#2c2418]">{entry.title}</h2>
+            <div className="flex items-center gap-4">
+              <span className="tag" style={{padding: '6px 20px'}}>Day {entry.day}</span>
+              <h2 className="heading-md display text-[#2c2418]">{entry.title}</h2>
             </div>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 ml-4">
           {editing ? (
             <>
-              <button onClick={() => { setEditing(false); setDay(entry.day); setTitle(entry.title); setDeskripsi(entry.deskripsi); setFoto(null) }} className="text-xs uppercase tracking-widest font-semibold px-3 py-1.5 text-[#6b5c4c] hover:bg-[#f5ede2] rounded">Batal</button>
-              <button onClick={handleSave} disabled={saving} className="text-xs uppercase tracking-widest font-semibold px-3 py-1.5 text-[#2c2418] hover:bg-[#f5ede2] rounded">{saving ? '...' : 'Simpan'}</button>
+              <button onClick={() => { setEditing(false); setDay(entry.day); setTitle(entry.title); setDeskripsi(entry.deskripsi); setFoto(null) }} className="btn btn-secondary text-xs" style={{padding: '8px 20px'}}>Batal</button>
+              <button onClick={handleSave} disabled={saving} className="btn btn-primary text-xs" style={{padding: '8px 20px'}}>{saving ? '...' : 'Simpan'}</button>
             </>
           ) : (
             <>
-              <button onClick={() => setEditing(true)} className="text-xs uppercase tracking-widest font-semibold px-3 py-1.5 text-[#6b5c4c] hover:bg-[#f5ede2] rounded">Edit</button>
-              <button onClick={onDelete} className="text-xs uppercase tracking-widest font-semibold px-3 py-1.5 text-[#9c8b78] hover:text-red-500 hover:bg-[#fdf5f5] rounded">Hapus</button>
+              <button onClick={() => setEditing(true)} className="btn btn-secondary text-xs" style={{padding: '8px 20px'}}>Edit</button>
+              <button onClick={onDelete} className="btn text-xs" style={{padding: '8px 20px', color: '#ef4444'}} onMouseEnter={(e) => (e.target as HTMLElement).style.background = '#fef5f5'} onMouseLeave={(e) => (e.target as HTMLElement).style.background = 'transparent'}>Hapus</button>
             </>
           )}
         </div>
@@ -71,32 +71,31 @@ export default function JurnalEntryCard({ entry, onDelete, onChanged }: { entry:
 
       {editing && entry.foto_url && !foto && (
         <div className="mb-4 relative inline-block">
-          <img src={entry.foto_url} alt="current" className="w-24 h-24 rounded-lg object-cover border border-[#ece8e1]" />
-          <button onClick={removeFoto} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+          <img src={entry.foto_url} alt="" className="w-32 h-32 rounded-2xl object-cover border border-[#e8e2d9]" />
+          <button onClick={removeFoto} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-sm flex items-center justify-center">×</button>
         </div>
       )}
       {editing && (
-        <label className="inline-block mb-4 text-xs uppercase tracking-widest font-semibold px-3 py-1.5 border border-dashed border-[#b89870] rounded text-[#6b5c4c] cursor-pointer hover:bg-[#f5ede2]">
-          {foto ? foto.name : 'Ganti foto'}
-          <input type="file" accept="image/*" onChange={(e) => setFoto(e.target.files?.[0] || null)} className="hidden" />
-        </label>
+        <label className="inline-block mb-4 btn btn-secondary text-xs">{foto ? foto.name : '+ Ganti foto'}<input type="file" accept="image/*" onChange={(e) => setFoto(e.target.files?.[0] || null)} className="hidden" /></label>
       )}
 
       {entry.foto_url && !editing && (
-        <div className="rounded-2xl overflow-hidden mb-6 border border-[#ece8e1]">
-          <img src={entry.foto_url} alt={entry.title} className="w-full h-[320px] object-cover" />
+        <div className="rounded-3xl overflow-hidden mb-8 border border-[#e8e2d9]">
+          <img src={entry.foto_url} alt={entry.title} className="w-full h-[400px] object-cover" />
         </div>
       )}
 
-      <div className="pl-5 border-l-2 border-[#f5ede2]">
+      <div className="pl-6 border-l-2 border-[#b09678]">
         {editing ? (
-          <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows={5} className="w-full px-4 py-3 bg-white border border-[#ece8e1] rounded-lg text-sm focus:outline-none focus:border-[#b89870] resize-none leading-relaxed" />
+          <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows={5} className="w-full px-6 py-4 bg-[#f9f7f2] border border-[#e8e2d9] rounded-[24px] text-sm focus:outline-none focus:border-[#b09678] resize-none leading-relaxed" />
         ) : (
-          <p className="text-[#6b5c4c] text-[15px] leading-relaxed whitespace-pre-wrap font-light">{entry.deskripsi}</p>
+          <p className="text-[#6b5e4e] text-lg leading-relaxed whitespace-pre-wrap font-light">{entry.deskripsi}</p>
         )}
       </div>
-      <div className="mt-6 pt-4 border-b border-[#f5ede2]">
-        <time className="text-[10px] uppercase tracking-widest text-[#b89870]">{new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+      <div className="mt-8 text-right">
+        <time className="text-xs uppercase tracking-[0.2em] text-[#b09678] font-semibold">
+          {new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </time>
       </div>
     </article>
   )

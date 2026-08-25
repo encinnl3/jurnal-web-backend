@@ -7,6 +7,8 @@ import JurnalForm from '@/components/JurnalForm'
 import JurnalEntryCard from '@/components/JurnalEntryCard'
 import AdminDashboard from '@/components/AdminDashboard'
 
+export const dynamic = 'force-dynamic'
+
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -25,63 +27,60 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: profileData } = await (supabase.from('profiles') as any).select('*').eq('id', id)
-      if (profileData?.length > 0) setProfile(profileData[0])
-      const { data: entryData } = await (supabase.from('jurnal_entries') as any).select('*').eq('profile_id', id).order('day', { ascending: true })
-      setEntries(entryData || [])
+      const { data: p } = await (supabase.from('profiles') as any).select('*').eq('id', id)
+      if (p?.length > 0) setProfile(p[0])
+      const { data: e } = await (supabase.from('jurnal_entries') as any).select('*').eq('profile_id', id).order('day', { ascending: true })
+      setEntries(e || [])
       setLoading(false)
     }
     fetchData()
-    const channel = supabase.channel(`admin-${id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'jurnal_entries', filter: `profile_id=eq.${id}` }, (payload) => {
-      if (payload.eventType === 'INSERT') setEntries((prev) => [...prev, payload.new as JurnalEntry].sort((a, b) => a.day - b.day))
-      else if (payload.eventType === 'UPDATE') setEntries((prev) => prev.map((e) => e.id === (payload.new as JurnalEntry).id ? (payload.new as JurnalEntry) : e))
-      else if (payload.eventType === 'DELETE') setEntries((prev) => prev.filter((e) => e.id !== (payload.old as JurnalEntry).id))
+    const ch = supabase.channel(`a-${id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'jurnal_entries', filter: `profile_id=eq.${id}` }, (p) => {
+      if (p.eventType === 'INSERT') setEntries((x) => [...x, p.new as JurnalEntry].sort((a, b) => a.day - b.day))
+      else if (p.eventType === 'UPDATE') setEntries((x) => x.map((e) => e.id === (p.new as JurnalEntry).id ? (p.new as JurnalEntry) : e))
+      else if (p.eventType === 'DELETE') setEntries((x) => x.filter((e) => e.id !== (p.old as JurnalEntry).id))
     }).subscribe()
-    return () => supabase.removeChannel(channel)
+    return () => supabase.removeChannel(ch)
   }, [id])
 
-  if (loading || !isAdmin) return <div className="min-h-screen flex items-center justify-center text-sm text-[#9c8b78]">Memuat...</div>
-  if (!profile) return <div className="min-h-screen flex items-center justify-center">Profile tidak ditemukan</div>
+  if (loading || !isAdmin) return <div className="min-h-screen flex items-center justify-center text-[#9c8b78]">Memuat...</div>
+  if (!profile) return <div className="min-h-screen flex items-center justify-center">Tidak ditemukan</div>
 
   return (
-    <div className="max-w-[800px] mx-auto px-8 py-16">
-      <header className="flex items-center justify-between mb-16">
-        <div className="flex items-center gap-6">
-          <div className="w-16 h-16 rounded-full bg-[#f5ede2] border border-[#ece8e1] flex items-center justify-center text-[#b89870] font-bold text-2xl overflow-hidden">
+    <main className="min-h-screen">
+      <section className="section-hero container-app" style={{paddingBottom: 0}}>
+        <div className="flex items-center justify-center gap-6 mb-8">
+          <div className="w-20 h-20 rounded-full bg-[#b09678] flex items-center justify-center text-white font-bold text-4xl overflow-hidden shadow-lg">
             {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : profile.name.charAt(0)}
           </div>
-          <h1 className="heading-display text-4xl text-[#2c2418]">{profile.name}</h1>
         </div>
-        <button onClick={() => { localStorage.removeItem('jurnal-session'); window.location.href = `/visitor/${id}` }} className="text-xs uppercase tracking-[0.1em] font-semibold px-5 py-2.5 border border-[#ece8e1] rounded-md hover:bg-[#f5ede2] transition-colors text-[#6b5c4c]">
-          Keluar
-        </button>
-      </header>
+        <h1 className="heading-xl display text-[#2c2418]">{profile.name}</h1>
+        <p className="text-xl text-[#6b5e4e] font-light mb-8">{entries.length} jurnal</p>
+        <button onClick={() => { localStorage.removeItem('jurnal-session'); window.location.href = `/visitor/${id}` }} className="btn btn-secondary">Keluar dari Admin</button>
+      </section>
 
-      <AdminDashboard profile={profile} entriesCount={entries.length} onProfileUpdate={(p) => setProfile(p)} />
+      <section className="container-app section" style={{paddingTop: 40}}>
+        <AdminDashboard profile={profile} entriesCount={entries.length} onProfileUpdate={(p) => setProfile(p)} />
 
-      <div className="flex items-center justify-between mb-10 mt-16">
-        <h2 className="heading-display text-2xl text-[#2c2418]">Jurnal ({entries.length})</h2>
-        <button onClick={() => setShowForm((s) => !s)} className="btn-main">
-          {showForm ? 'Tutup' : '+ Tambah'}
-        </button>
-      </div>
-
-      {showForm && <div className="mb-10"><JurnalForm profileId={id} onSuccess={() => setShowForm(false)} /></div>}
-
-      {entries.length === 0 ? (
-        <div className="text-center py-20 text-[#9c8b78]">Belum ada jurnal.</div>
-      ) : (
-        <div className="space-y-10">
-          {entries.map((entry) => (
-            <JurnalEntryCard
-              key={entry.id}
-              entry={entry}
-              onDelete={() => { if (confirm('Hapus?')) (supabase.from('jurnal_entries') as any).delete().eq('id', entry.id); setEntries((prev) => prev.filter((e) => e.id !== entry.id)) }}
-              onChanged={(updated) => setEntries((prev) => prev.map((e) => e.id === updated.id ? updated : e).sort((a, b) => a.day - b.day))}
-            />
-          ))}
+        <div className="flex items-center justify-between mt-16 mb-10">
+          <h2 className="heading-md display text-[#2c2418]">Jurnal</h2>
+          <button onClick={() => setShowForm((s) => !s)} className="btn btn-primary">{showForm ? 'Tutup' : '+ Tambah'}</button>
         </div>
-      )}
-    </div>
+
+        {showForm && <div className="mb-10"><JurnalForm profileId={id} onSuccess={() => setShowForm(false)} /></div>}
+
+        {entries.length === 0 ? (
+          <div className="text-center py-20 text-[#9c8b78] text-lg">Belum ada jurnal.</div>
+        ) : (
+          <div className="space-y-10">
+            {entries.map((entry) => (
+              <JurnalEntryCard key={entry.id} entry={entry}
+                onDelete={() => { if (confirm('Hapus?')) (supabase.from('jurnal_entries') as any).delete().eq('id', entry.id); setEntries((p) => p.filter((e) => e.id !== entry.id)) }}
+                onChanged={(u) => setEntries((p) => p.map((e) => e.id === u.id ? u : e).sort((a, b) => a.day - b.day))}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   )
 }

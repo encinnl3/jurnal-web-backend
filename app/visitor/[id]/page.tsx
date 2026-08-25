@@ -4,6 +4,8 @@ import { use, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { Profile, JurnalEntry } from '@/lib/types'
 
+export const dynamic = 'force-dynamic'
+
 export default function VisitorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -15,22 +17,22 @@ export default function VisitorPage({ params }: { params: Promise<{ id: string }
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: profileData } = await (supabase.from('profiles') as any).select('*').eq('id', id)
-      if (profileData?.length > 0) setProfile(profileData[0])
-      const { data: entryData } = await (supabase.from('jurnal_entries') as any).select('*').eq('profile_id', id).order('day', { ascending: true })
-      setEntries(entryData || [])
+      const { data: p } = await (supabase.from('profiles') as any).select('*').eq('id', id)
+      if (p?.length > 0) setProfile(p[0])
+      const { data: e } = await (supabase.from('jurnal_entries') as any).select('*').eq('profile_id', id).order('day', { ascending: true })
+      setEntries(e || [])
       setLoading(false)
     }
     fetchData()
-    const channel = supabase.channel(`visitor-${id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'jurnal_entries', filter: `profile_id=eq.${id}` }, (payload) => {
-      if (payload.eventType === 'INSERT') setEntries((prev) => [...prev, payload.new as JurnalEntry].sort((a, b) => a.day - b.day))
-      else if (payload.eventType === 'UPDATE') setEntries((prev) => prev.map((e) => e.id === (payload.new as JurnalEntry).id ? (payload.new as JurnalEntry) : e))
-      else if (payload.eventType === 'DELETE') setEntries((prev) => prev.filter((e) => e.id !== (payload.old as JurnalEntry).id))
+    const ch = supabase.channel(`v-${id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'jurnal_entries', filter: `profile_id=eq.${id}` }, (p) => {
+      if (p.eventType === 'INSERT') setEntries((x) => [...x, p.new as JurnalEntry].sort((a, b) => a.day - b.day))
+      else if (p.eventType === 'UPDATE') setEntries((x) => x.map((e) => e.id === (p.new as JurnalEntry).id ? (p.new as JurnalEntry) : e))
+      else if (p.eventType === 'DELETE') setEntries((x) => x.filter((e) => e.id !== (p.old as JurnalEntry).id))
     }).subscribe()
-    return () => supabase.removeChannel(channel)
+    return () => supabase.removeChannel(ch)
   }, [id])
 
-  const handleAdminLogin = async () => {
+  const handleLogin = async () => {
     setError('')
     if (!profile) return
     if (profile.password !== password) { setError('Password salah'); return }
@@ -38,82 +40,83 @@ export default function VisitorPage({ params }: { params: Promise<{ id: string }
     window.location.href = `/profile/${profile.id}`
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-sm text-[#9c8b78]">Memuat...</div>
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-[#9c8b78]">Memuat...</div>
   if (!profile) return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="text-center bg-white p-12 rounded-2xl border border-[#ece8e1]">
-        <p className="text-[#6b5c4c] mb-6">Profile tidak ditemukan.</p>
-        <a href="/" className="btn-main">Kembali ke Beranda</a>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center p-12">
+        <p className="text-lg text-[#6b5e4e] mb-8">Profile tidak ditemukan</p>
+        <a href="/" className="btn btn-primary">Kembali</a>
       </div>
     </div>
   )
 
   return (
-    <div className="max-w-[800px] mx-auto px-8 py-16">
-      <a href="/" className="text-xs uppercase tracking-[0.1em] text-[#9c8b78] hover:text-[#2c2418] transition-colors mb-16 inline-block">
-        ← Kembali
-      </a>
-
-      <header className="flex items-center justify-between mb-16">
-        <div className="flex items-center gap-6">
-          <div className="w-16 h-16 rounded-full bg-[#f5ede2] border border-[#ece8e1] flex items-center justify-center text-[#b89870] font-bold text-2xl overflow-hidden">
+    <main className="min-h-screen">
+      <section className="section-hero container-app" style={{paddingBottom: 0}}>
+        <a href="/" className="tag mb-8">← Kembali</a>
+        <div className="flex items-center justify-center gap-6 mb-8">
+          <div className="w-20 h-20 rounded-full bg-[#b09678] flex items-center justify-center text-white font-bold text-4xl overflow-hidden shadow-lg">
             {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : profile.name.charAt(0)}
           </div>
-          <h1 className="heading-display text-4xl text-[#2c2418]">{profile.name}</h1>
         </div>
-        <button onClick={() => setShowModal(true)} className="text-xs uppercase tracking-[0.1em] font-semibold px-5 py-2.5 border border-[#ece8e1] rounded-md hover:bg-[#f5ede2] transition-colors text-[#6b5c4c]">
-          Admin
-        </button>
-      </header>
+        <h1 className="heading-xl display text-[#2c2418]">{profile.name}</h1>
+        <p className="text-xl text-[#6b5e4e] max-w-md mx-auto font-light">
+          Berikut adalah catatan harian selama menjalankan Praktik Kerja Lapangan.
+        </p>
+        <div className="mt-8">
+          <button onClick={() => setShowModal(true)} className="btn btn-secondary">Admin</button>
+        </div>
+      </section>
 
-      <div className="space-y-12">
+      <section className="container-app section" style={{paddingTop: 40}}>
         {entries.length === 0 ? (
-          <div className="text-center py-20 text-[#9c8b78]">Belum ada jurnal.</div>
+          <div className="text-center py-20 text-[#9c8b78] text-lg">Belum ada jurnal.</div>
         ) : (
-          entries.map((entry) => (
-            <article key={entry.id} className="group">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="day-badge">Day {entry.day}</span>
-                <h2 className="heading-display text-2xl text-[#2c2418]">{entry.title}</h2>
-              </div>
-              {entry.foto_url && (
-                <div className="rounded-2xl overflow-hidden mb-6 border border-[#ece8e1]">
-                  <img src={entry.foto_url} alt={entry.title} className="w-full h-[320px] object-cover" />
+          <div className="space-y-16">
+            {entries.map((entry) => (
+              <article key={entry.id}>
+                <div className="flex items-center gap-4 mb-6">
+                  <span className="tag" style={{padding: '6px 20px'}}>Day {entry.day}</span>
+                  <h2 className="heading-md display text-[#2c2418]">{entry.title}</h2>
                 </div>
-              )}
-              <div className="pl-5 border-l-2 border-[#f5ede2]">
-                <p className="text-[#6b5c4c] text-[15px] leading-relaxed whitespace-pre-wrap font-light">
-                  {entry.deskripsi}
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-b border-[#f5ede2]">
-                <time className="text-[11px] uppercase tracking-widest text-[#b89870]">
-                  {new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </time>
-              </div>
-            </article>
-          ))
+                {entry.foto_url && (
+                  <div className="rounded-3xl overflow-hidden mb-8 border border-[#e8e2d9]">
+                    <img src={entry.foto_url} alt={entry.title} className="w-full h-[400px] object-cover" />
+                  </div>
+                )}
+                <div className="pl-6 border-l-2 border-[#b09678]">
+                  <p className="text-[#6b5e4e] text-lg leading-relaxed whitespace-pre-wrap font-light">
+                    {entry.deskripsi}
+                  </p>
+                </div>
+                <div className="mt-8 text-right">
+                  <time className="text-xs uppercase tracking-[0.2em] text-[#b09678] font-semibold">
+                    {new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </time>
+                </div>
+              </article>
+            ))}
+          </div>
         )}
-      </div>
+      </section>
 
       {showModal && (
-        <div className="fixed inset-0 bg-[#2c2418]/40 backdrop-blur-sm flex items-center justify-center z-50 p-6" onClick={() => { setShowModal(false); setPassword(''); setError('') }}>
-          <div className="bg-white rounded-2xl p-10 max-w-sm w-full border border-[#ece8e1] shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="heading-display text-2xl text-[#2c2418] mb-2">Admin Panel</h2>
-            <p className="text-xs text-[#9c8b78] mb-8 uppercase tracking-wider">Masukkan password</p>
-            <input
-              type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••" autoFocus
-              className="w-full px-4 py-3 bg-[#fdfcf8] border border-[#ece8e1] rounded-lg mb-4 text-sm focus:outline-none focus:border-[#b89870] transition-colors"
-              onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-6" onClick={() => { setShowModal(false); setPassword(''); setError('') }}>
+          <div className="bg-white rounded-[40px] p-12 max-w-md w-full border border-[#e8e2d9] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="heading-md display text-[#2c2418]">Admin Panel</h2>
+            <p className="text-sm text-[#9c8b78] mb-8 uppercase tracking-wider">Masukkan password</p>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••" autoFocus
+              className="w-full px-6 py-4 bg-[#f9f7f2] border border-[#e8e2d9] rounded-full mb-6 text-center tracking-[0.5em] focus:outline-none focus:border-[#b09678]"
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
             />
-            {error && <p className="text-xs text-red-500 bg-red-50 p-3 rounded-lg mb-4">{error}</p>}
-            <div className="flex gap-3">
-              <button onClick={() => { setShowModal(false); setPassword(''); setError('') }} className="btn-main flex-1 bg-[#fdfcf8] text-[#6b5c4c] border border-[#ece8e1]">Batal</button>
-              <button onClick={handleAdminLogin} className="btn-main flex-1">Masuk</button>
+            {error && <p className="text-sm text-red-500 bg-red-50 p-4 rounded-2xl mb-6 text-center">{error}</p>}
+            <div className="flex gap-4">
+              <button onClick={() => { setShowModal(false); setPassword(''); setError('') }} className="btn btn-secondary flex-1">Batal</button>
+              <button onClick={handleLogin} className="btn btn-primary flex-1">Masuk</button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </main>
   )
 }

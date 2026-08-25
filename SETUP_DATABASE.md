@@ -16,14 +16,15 @@ drop table if exists public.jurnal_entries; drop table if exists public.profiles
 
 ## Alur Aplikasi
 
-1. **Landing Page**: Tampil 3 profil (Farhan, Akmal, Janandra) dengan tombol "Lihat Jurnal"
-2. **Visitor Page**: Hanya bisa lihat jurnal + tombol "Admin" di pojok kanan
-3. **Mode Admin**: Masuk dengan password → bisa tambah/edit/hapus jurnal, ganti password, upload avatar
-4. **Keluar**: Kembali ke visitor mode
+1. **Landing Page**: Hero section besar "Jurnal PKL" + 3 kartu profil bulat
+2. **Visitor Page**: Klik profil → lihat jurnal harian
+3. **Mode Admin**: Klik tombol Admin → masukkan password → dashboard admin
+4. **Dashboard Admin**: Statistik, pengaturan avatar/password, CRUD jurnal
+5. **Keluar**: Kembali ke visitor mode
 
-## Warna Theme
+## Design System
 
-- Background: Mocha/cream gradient
-- Card: Glassmorphism dengan blur
-- Accent: Tan/warna tanah (bukan ungu/biru)
-- Text: Dark brown (bukan hitam pekat)
+- **Font**: Playfair Display (serif) untuk headings, Inter untuk body
+- **Warna**: Mocha/Cream - Tanah - Bukan biru/ungu
+- **Style**: Editorial minimal dengan border-radius besar (40px)
+- **Efek**: Hover lift, blur backdrop, shadow halus
