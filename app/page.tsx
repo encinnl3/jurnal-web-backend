@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import type { Profile } from '@/lib/types'
 
-export const dynamic = 'force-dynamic'
-
 export default function Home() {
   const router = useRouter()
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -25,50 +23,37 @@ export default function Home() {
   }, [])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-fg-secondary">Loading...</div>
-      </div>
-    )
+    return <div className="container-app py-20 text-center text-fg-muted">Loading...</div>
   }
 
   return (
-    <div className="min-h-screen bg-pattern py-20">
-      <div className="container-app">
-        <div className="text-center mb-16 animate-in">
-          <h1 className="text-6xl title-display text-gradient mb-4">
-            Jurnal PKL
-          </h1>
-          <p className="text-xl text-fg-secondary max-w-lg mx-auto">
-            Pilih profil untuk melihat jurnal harian peserta PKL.
-          </p>
-        </div>
+    <div className="container-app py-16">
+      <div className="text-center mb-12 animate-in">
+        <h1 className="text-4xl font-bold mb-2">Jurnal PKL</h1>
+        <p className="text-fg-secondary">Pilih profil untuk melihat jurnal</p>
+      </div>
 
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
-          {profiles.map((profile, index) => (
-            <div
-              key={profile.id}
-              className={`card card-elevated p-8 flex flex-col items-center gap-6 animate-in animate-delay-${(index % 3) + 1}`}
-            >
-              <div className="avatar avatar-lg shadow-md">
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt={profile.name} className="w-full h-full object-cover" />
-                ) : (
-                  profile.name.charAt(0).toUpperCase()
-                )}
-              </div>
-              <h2 className="text-2xl font-bold text-fg-primary title-display">
-                {profile.name}
-              </h2>
-              <button
-                onClick={() => router.push(`/visitor/${profile.id}`)}
-                className="btn btn-primary w-full"
-              >
-                Lihat Jurnal
-              </button>
+      <div className="profiles-grid">
+        {profiles.map((profile, index) => (
+          <div
+            key={profile.id}
+            className="card profile-card animate-in"
+            style={{ animationDelay: `${index * 0.05}s` }}
+            onClick={() => router.push(`/visitor/${profile.id}`)}
+          >
+            <div className="avatar">
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt={profile.name} />
+              ) : (
+                profile.name.charAt(0).toUpperCase()
+              )}
             </div>
-          ))}
-        </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-semibold text-lg truncate">{profile.name}</h2>
+              <p className="text-sm text-fg-muted">Lihat jurnal →</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

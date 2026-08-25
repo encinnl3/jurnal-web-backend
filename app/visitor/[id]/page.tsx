@@ -21,8 +21,6 @@ export default function VisitorPage({ params }: { params: Promise<{ id: string }
 
       if (profileData && profileData.length > 0) {
         setProfile(profileData[0])
-      } else {
-        setProfile(null)
       }
 
       const { data: entryData } = await (supabase.from('jurnal_entries') as any)
@@ -63,123 +61,94 @@ export default function VisitorPage({ params }: { params: Promise<{ id: string }
         }
       )
       .subscribe()
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return () => supabase.removeChannel(channel)
   }, [id])
 
   const handleAdminLogin = async () => {
     setError('')
     if (!profile) return
-
-    if (profile.password !== password) {
-      setError('Password salah')
-      return
-    }
-
+    if (profile.password !== password) { setError('Password salah'); return }
     localStorage.setItem('jurnal-session', JSON.stringify({ profileId: profile.id, name: profile.name }))
     window.location.href = `/profile/${profile.id}`
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-fg-secondary">Loading...</div>
-      </div>
-    )
+    return <div className="container-app py-20 text-center text-fg-muted">Loading...</div>
   }
 
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-6">
-        <div className="card p-8 max-w-md w-full text-center">
-          <h2 className="text-xl font-bold mb-4">Profile tidak ditemukan</h2>
-          <p className="text-fg-secondary text-sm mb-6">ID: {id}</p>
-          <a href="/" className="btn btn-primary">Kembali ke Beranda</a>
+      <div className="container-app py-20">
+        <div className="card p-8 text-center">
+          <p className="text-fg-secondary mb-4">Profile tidak ditemukan</p>
+          <a href="/" className="btn btn-primary">Kembali</a>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen py-10 bg-pattern">
-      <div className="container-app max-w-3xl">
-        <a href="/" className="btn btn-ghost text-sm mb-8">← Kembali</a>
+    <div className="container-app py-8">
+      <button onClick={() => router.back()} className="btn btn-ghost btn-sm mb-6">← Kembali</button>
 
-        <header className="card p-8 mb-8 flex items-center justify-between animate-in">
-          <div className="flex items-center gap-6">
-            <div className="avatar avatar-lg shadow-md">
+      <div className="card mb-8 p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="avatar-lg">
               {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt="avatar" />
+                <img src={profile.avatar_url} alt={profile.name} />
               ) : (
                 profile.name.charAt(0).toUpperCase()
               )}
             </div>
-            <div>
-              <span className="badge-outline badge mb-2">Mode Baca</span>
-              <h1 className="text-3xl title-display">{profile.name}</h1>
-            </div>
+            <h1 className="text-2xl font-bold">{profile.name}</h1>
           </div>
-          <button
-            onClick={() => setShowPasswordModal(true)}
-            className="btn btn-secondary"
-          >
-            🔒 Admin
+          <button onClick={() => setShowPasswordModal(true)} className="btn btn-primary btn-sm">
+            Admin
           </button>
-        </header>
-
-        <h2 className="text-2xl title-display mb-6">Jurnal Harian</h2>
-
-        {entries.length === 0 ? (
-          <div className="card p-12 text-center text-fg-secondary">
-            Belum ada jurnal.
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {entries.map((entry, index) => (
-              <div key={entry.id} className={`card p-0 overflow-hidden animate-in animate-delay-${(index % 3) + 1}`}>
-                <div className="journal-entry p-6 flex items-center gap-3">
-                  <span className="badge">Day {entry.day}</span>
-                  <h3 className="text-xl font-semibold title-display">{entry.title}</h3>
-                </div>
-                {entry.foto_url && (
-                  <img src={entry.foto_url} alt={entry.title} className="mx-6 rounded-xl" style={{maxHeight: 320, width: 'calc(100% - 48px)', objectFit: 'cover'}} />
-                )}
-                <div className="p-6 pt-4">
-                  <p className="text-fg-secondary leading-relaxed whitespace-pre-wrap">{entry.deskripsi}</p>
-                  <div className="divider" />
-                  <p className="text-sm text-fg-muted">{new Date(entry.created_at).toLocaleString('id-ID')}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        </div>
       </div>
 
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6 animate-in">
-          <div className="card p-10 max-w-sm w-full">
-            <h2 className="text-2xl title-display mb-2">Mode Admin</h2>
-            <p className="text-fg-secondary mb-6">Masukkan password untuk mengakses dashboard admin.</p>
+      <h2 className="text-xl font-bold mb-6">Jurnal ({entries.length})</h2>
 
+      {entries.length === 0 ? (
+        <div className="card p-12 text-center text-fg-muted">Belum ada jurnal</div>
+      ) : (
+        <div className="space-y-4">
+          {entries.map((entry) => (
+            <div key={entry.id} className="card p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="day-badge">Day {entry.day}</span>
+                <h3 className="font-semibold flex-1">{entry.title}</h3>
+              </div>
+              {entry.foto_url && (
+                <img src={entry.foto_url} alt={entry.title} className="w-full rounded-lg mb-4 max-h-64 object-cover" />
+              )}
+              <p className="text-fg-secondary text-sm whitespace-pre-wrap mb-3">{entry.deskripsi}</p>
+              <p className="text-xs text-fg-muted">{new Date(entry.created_at).toLocaleString('id-ID')}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showPasswordModal && (
+        <div className="modal-overlay" onClick={() => { setShowPasswordModal(false); setPassword(''); setError('') }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold mb-2">Admin</h2>
+            <p className="text-fg-secondary text-sm mb-6">Masukkan password</p>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••"
-              className="input mb-4"
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAdminLogin() }}
+              className="input input-sm mb-4 w-full"
+              onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
+              autoFocus
             />
-
             {error && <p className="message message-error mb-4">{error}</p>}
-
             <div className="flex gap-3">
-              <button onClick={() => { setShowPasswordModal(false); setPassword(''); setError('') }} className="btn btn-secondary flex-1">
-                Batal
-              </button>
-              <button onClick={handleAdminLogin} className="btn btn-primary flex-1">
-                Masuk
-              </button>
+              <button onClick={() => { setShowPasswordModal(false); setPassword(''); setError('') }} className="btn btn-ghost flex-1">Batal</button>
+              <button onClick={handleAdminLogin} className="btn btn-primary flex-1">Masuk</button>
             </div>
           </div>
         </div>

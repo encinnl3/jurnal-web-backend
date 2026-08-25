@@ -16,7 +16,7 @@ export default function JurnalEntryCard({
 }) {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState('')
   const [day, setDay] = useState(entry.day)
   const [title, setTitle] = useState(entry.title)
   const [deskripsi, setDeskripsi] = useState(entry.deskripsi)
@@ -25,19 +25,15 @@ export default function JurnalEntryCard({
   const uploadFoto = async (file: File): Promise<string | null> => {
     const compressed = await compressImage(file, 1000, 0.75)
     const fileName = `${entry.profile_id}/${entry.id}-${Date.now()}.jpg`
-    const { error: e } = await supabase.storage
-      .from('jurnal-foto')
-      .upload(fileName, compressed, { upsert: true })
-
-    if (e) { setError(`Upload foto gagal: ${e.message}`); return null }
-
+    const { error: e } = await supabase.storage.from('jurnal-foto').upload(fileName, compressed, { upsert: true })
+    if (e) { setError(e.message); return null }
     const { data } = supabase.storage.from('jurnal-foto').getPublicUrl(fileName)
     return data.publicUrl
   }
 
   const handleSave = async () => {
     setSaving(true)
-    setError(null)
+    setError('')
 
     let fotoUrl = entry.foto_url
     if (foto) {
@@ -57,86 +53,70 @@ export default function JurnalEntryCard({
     setFoto(null)
   }
 
-  const handleCancel = () => {
-    setDay(entry.day)
-    setTitle(entry.title)
-    setDeskripsi(entry.deskripsi)
-    setFoto(null)
-    setError(null)
-    setEditing(false)
-  }
-
   const removeFoto = async () => {
     if (!confirm('Hapus foto?')) return
-    const { data, error: e } = await (supabase.from('jurnal_entries') as any)
-      .update({ foto_url: null }).eq('id', entry.id).select().single()
+    const { data, error: e } = await (supabase.from('jurnal_entries') as any).update({ foto_url: null }).eq('id', entry.id).select().single()
     if (e) { setError(e.message); return }
     onChanged(data)
   }
 
   return (
     <div className="card overflow-hidden">
-      <div className="px-6 py-4 flex items-center justify-between bg-bg-secondary border-b border-card-border">
+      <div className="px-6 py-4 bg-bg-subtle flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {editing ? (
-            <div className="flex items-center gap-2 flex-1">
-              <input type="number" min={1} value={day} onChange={(e) => setDay(parseInt(e.target.value) || 1)} className="input w-24 text-sm" />
-              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="input flex-1 text-sm font-semibold" />
+            <div className="flex gap-2 flex-1">
+              <input type="number" min={1} value={day} onChange={(e) => setDay(parseInt(e.target.value) || 1)} className="input input-sm w-16" />
+              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="input input-sm flex-1" />
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <span className="badge">Day {entry.day}</span>
-              <h3 className="text-lg font-semibold title-display">{entry.title}</h3>
+              <span className="day-badge">Day {entry.day}</span>
+              <h3 className="font-semibold truncate">{entry.title}</h3>
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 ml-3">
+        <div className="flex gap-2 ml-2">
           {editing ? (
             <>
-              <button onClick={handleCancel} disabled={saving} className="btn btn-ghost btn-sm">Batal</button>
-              <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-sm">{saving ? 'Simpan' : 'Simpan'}</button>
+              <button onClick={() => { setEditing(false); setDay(entry.day); setTitle(entry.title); setDeskripsi(entry.deskripsi); setFoto(null); setError('') }} className="btn btn-ghost btn-sm">Batal</button>
+              <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-sm">{saving ? '...' : 'Simpan'}</button>
             </>
           ) : (
             <>
               <button onClick={() => setEditing(true)} className="btn btn-ghost btn-sm">Edit</button>
-              <button onClick={onDelete} className="btn btn-ghost btn-sm" style={{color: 'var(--error)'}}>Hapus</button>
+              <button onClick={onDelete} className="btn btn-danger">Hapus</button>
             </>
           )}
         </div>
       </div>
 
       {editing && (
-        <div className="px-6 py-4 bg-bg-secondary border-b border-card-border">
-          <div className="flex items-center gap-4 flex-wrap">
-            {entry.foto_url && !foto && (
-              <div className="relative">
-                <img src={entry.foto_url} alt="current" className="w-20 h-20 rounded-xl object-cover border-2 border-card-border" />
-                <button onClick={removeFoto} className="absolute -top-2 -right-2 btn btn-danger btn-sm" style={{padding: '2px 6px', borderRadius: 100}} type="button">×</button>
-              </div>
-            )}
-            <label className="btn btn-secondary btn-sm cursor-pointer">
-              {foto ? `Pilih: ${foto.name}` : '+ Ganti foto'}
-              <input type="file" accept="image/*" onChange={(e) => setFoto(e.target.files?.[0] || null)} className="hidden" />
-            </label>
-          </div>
+        <div className="px-6 py-3 bg-bg-subtle border-b border-border">
+          {entry.foto_url && !foto && (
+            <div className="relative inline-block">
+              <img src={entry.foto_url} alt="current" className="w-16 h-16 rounded-lg object-cover" />
+              <button onClick={removeFoto} className="absolute -top-2 -right-2 bg-error text-white rounded-full w-5 h-5 flex items-center justify-center text-xs" type="button">×</button>
+            </div>
+          )}
+          <label className="btn btn-ghost btn-sm mt-2">
+            {foto ? `${foto.name}` : '+ Ganti foto'}
+            <input type="file" accept="image/*" onChange={(e) => setFoto(e.target.files?.[0] || null)} className="hidden" />
+          </label>
         </div>
       )}
 
-      {entry.foto_url && !editing && (
-        <img src={entry.foto_url} alt={entry.title} className="image-cover mx-6 mt-6" style={{width: 'calc(100% - 48px)'}} />
-      )}
+      {entry.foto_url && !editing && <img src={entry.foto_url} alt={entry.title} className="w-full h-48 object-cover" />}
 
       <div className="p-6">
         {editing ? (
-          <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows={6} placeholder="Ceritakan kegiatan hari ini..." className="input" />
+          <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows={4} className="input w-full" />
         ) : (
-          <p className="text-fg-secondary leading-relaxed whitespace-pre-wrap">{entry.deskripsi}</p>
+          <p className="text-fg-secondary text-sm whitespace-pre-wrap">{entry.deskripsi}</p>
         )}
-        <div className="divider" />
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-fg-muted">{new Date(entry.created_at).toLocaleString('id-ID')}</p>
-        </div>
-        {error && <p className="message message-error mt-3">{error}</p>}
+        <div className="divider"></div>
+        <p className="text-xs text-fg-muted">{new Date(entry.created_at).toLocaleString('id-ID')}</p>
+        {error && <p className="message message-error mt-2">{error}</p>}
       </div>
     </div>
   )
