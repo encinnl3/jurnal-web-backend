@@ -3,31 +3,33 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { Profile, JurnalEntry } from '@/lib/types'
-import Link from 'next/link'
 import JurnalForm from '@/components/JurnalForm'
 import JurnalEntryCard from '@/components/JurnalEntryCard'
 import AdminDashboard from '@/components/AdminDashboard'
-import { useSession } from '@/components/SessionProvider'
 
 export const dynamic = 'force-dynamic'
 
 export default function ProfilePage({ params }: { params: { id: string } }) {
   const { id } = params
-  const { session } = useSession()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [entries, setEntries] = useState<JurnalEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
+    const session = localStorage.getItem('jurnal-session')
     if (!session) {
-      window.location.href = '/'
+      window.location.href = `/visitor/${id}`
       return
     }
-    if (session.profileId !== id) {
+    const { profileId } = JSON.parse(session)
+    if (profileId !== id) {
       window.location.href = `/visitor/${id}`
+      return
     }
-  }, [session, id])
+    setIsAdmin(true)
+  }, [id])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,6 +86,11 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
     )
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('jurnal-session')
+    window.location.href = `/visitor/${id}`
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -96,6 +103,14 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-fg-secondary">Profile tidak ditemukan</div>
+      </div>
+    )
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-fg-secondary">Mengalihkan...</div>
       </div>
     )
   }
@@ -117,14 +132,8 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
               <h1 className="text-3xl title-display">{profile.name}</h1>
             </div>
           </div>
-          <button
-            onClick={() => {
-              localStorage.removeItem('jurnal-session')
-              window.location.href = '/'
-            }}
-            className="btn btn-secondary text-sm"
-          >
-            Logout
+          <button onClick={handleLogout} className="btn btn-secondary text-sm">
+            Keluar dari Admin
           </button>
         </header>
 
@@ -152,7 +161,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
 
         {entries.length === 0 ? (
           <div className="card p-12 text-center text-fg-secondary">
-            Belum ada jurnal entry. Klik tombol "+ Tambah Jurnal" di atas.
+            Belum ada jurnal. Klik "+ Tambah Jurnal" di atas.
           </div>
         ) : (
           <div className="space-y-6">

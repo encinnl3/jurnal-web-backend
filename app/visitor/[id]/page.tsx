@@ -11,6 +11,9 @@ export default function VisitorPage({ params }: { params: { id: string } }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [entries, setEntries] = useState<JurnalEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +64,20 @@ export default function VisitorPage({ params }: { params: { id: string } }) {
     }
   }, [id])
 
+  const handleAdminLogin = async () => {
+    setError('')
+    const { data, error: e } = await (supabase.from('profiles') as any)
+      .select('id, name, password')
+      .eq('id', id)
+      .single()
+
+    if (e || !data) { setError('Gagal mengambil data profil'); return }
+    if (data.password !== password) { setError('Password salah'); return }
+
+    localStorage.setItem('jurnal-session', JSON.stringify({ profileId: data.id, name: data.name }))
+    window.location.href = `/profile/${data.id}`
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -82,18 +99,26 @@ export default function VisitorPage({ params }: { params: { id: string } }) {
       <div className="container-app max-w-3xl">
         <a href="/" className="btn btn-ghost text-sm mb-8">← Kembali</a>
 
-        <header className="card p-8 mb-8 flex items-center gap-6 animate-in">
-          <div className="avatar avatar-lg shadow-md">
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="avatar" />
-            ) : (
-              profile.name.charAt(0).toUpperCase()
-            )}
+        <header className="card p-8 mb-8 flex items-center justify-between animate-in">
+          <div className="flex items-center gap-6">
+            <div className="avatar avatar-lg shadow-md">
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt="avatar" />
+              ) : (
+                profile.name.charAt(0).toUpperCase()
+              )}
+            </div>
+            <div>
+              <span className="badge-outline badge mb-2">Mode Baca</span>
+              <h1 className="text-3xl title-display">{profile.name}</h1>
+            </div>
           </div>
-          <div>
-            <span className="badge-outline badge mb-2">Mode Baca</span>
-            <h1 className="text-3xl title-display">{profile.name}</h1>
-          </div>
+          <button
+            onClick={() => setShowPasswordModal(true)}
+            className="btn btn-secondary"
+          >
+            🔒 Admin
+          </button>
         </header>
 
         <h2 className="text-2xl title-display mb-6">Jurnal Harian</h2>
@@ -123,6 +148,35 @@ export default function VisitorPage({ params }: { params: { id: string } }) {
           </div>
         )}
       </div>
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6 animate-in">
+          <div className="card p-10 max-w-sm w-full">
+            <h2 className="text-2xl title-display mb-2">Mode Admin</h2>
+            <p className="text-fg-secondary mb-6">Masukkan password untuk mengakses dashboard admin.</p>
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••"
+              className="input mb-4"
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAdminLogin() }}
+            />
+
+            {error && <p className="message message-error mb-4">{error}</p>}
+
+            <div className="flex gap-3">
+              <button onClick={() => { setShowPasswordModal(false); setPassword(''); setError('') }} className="btn btn-secondary flex-1">
+                Batal
+              </button>
+              <button onClick={handleAdminLogin} className="btn btn-primary flex-1">
+                Masuk
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
