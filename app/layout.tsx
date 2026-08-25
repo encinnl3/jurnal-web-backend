@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Website jurnal PKL dengan Supabase",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-[#f4eedd]">

@@ -1,14 +1,14 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { Profile, JurnalEntry } from '@/lib/types'
 import Link from 'next/link'
 import JurnalForm from '@/components/JurnalForm'
 import JurnalEntryCard from '@/components/JurnalEntryCard'
 
-export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function ProfilePage({ params }: { params: { id: string } }) {
+  const { id } = params
   const [profile, setProfile] = useState<Profile | null>(null)
   const [entries, setEntries] = useState<JurnalEntry[]>([])
   const [loading, setLoading] = useState(true)
