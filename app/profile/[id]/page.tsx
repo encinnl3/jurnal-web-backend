@@ -171,7 +171,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
                 entry={entry}
                 onDelete={() => {
                   if (!confirm('Hapus entry ini?')) return
-                  supabase.from('jurnal_entries').delete().eq('id', entry.id)
+                  (supabase.from('jurnal_entries') as any).delete().eq('id', entry.id)
                   setEntries((prev) => prev.filter((e) => e.id !== entry.id))
                 }}
                 onChanged={handleEntryChanged}

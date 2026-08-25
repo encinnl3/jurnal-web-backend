@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import type { Profile, JurnalEntry } from '@/lib/types'
+import type { Profile } from '@/lib/types'
 
 export default function AdminDashboard({
   profile,
@@ -111,13 +111,9 @@ export default function AdminDashboard({
         </div>
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="text-[#8b5e3c] hover:text-[#5d3f25] text-sm px-4 py-2 rounded-lg border border-[#d3c9b0] hover:border-[#8b5e3c] transition flex items-center gap-2"
+          className="text-[#8d6e63] hover:text-[#5d4037] text-sm px-4 py-2 rounded-xl border border-[#d3c9b0] hover:border-[#8d6e63] transition font-medium"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M12 1v6m0 6v10M4.22 4.22l4.24 4.24m7.07 7.07l4.24 4.24M1 12h6m6 0h10M4.22 19.78l4.24-4.24m7.07-7.07l4.24-4.24"></path>
-          </svg>
-          {showSettings ? 'Tutup' : 'Pengaturan'}
+          {showSettings ? 'Tutup Pengaturan' : '⚙ Pengaturan Admin'}
         </button>
       </div>
 

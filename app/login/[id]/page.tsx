@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/components/SessionProvider'
@@ -15,7 +15,7 @@ export default function LoginPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(false)
   const [profileName, setProfileName] = useState('')
 
-  useState(() => {
+  useEffect(() => {
     ;(async () => {
       const { data } = await (supabase.from('profiles') as any)
         .select('name')
@@ -23,7 +23,7 @@ export default function LoginPage({ params }: { params: { id: string } }) {
         .single()
       if (data) setProfileName(data.name)
     })()
-  })
+  }, [id])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
