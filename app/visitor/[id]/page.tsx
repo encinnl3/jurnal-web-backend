@@ -90,8 +90,18 @@ export default function VisitorPage({ params }: { params: { id: string } }) {
 
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-fg-secondary">Profile tidak ditemukan</div>
+      <div className="flex items-center justify-center min-h-screen p-6">
+        <div className="card p-8 max-w-md w-full text-center">
+          <h2 className="text-xl font-bold mb-4">Profile tidak ditemukan</h2>
+          <p className="text-fg-secondary mb-4">ID: {id}</p>
+          <p className="text-fg-secondary text-sm mb-4">
+            Kemungkinan: database belum di-setup atau koneksi Supabase bermasalah.
+          </p>
+          <p className="text-fg-secondary text-sm mb-6">
+            Pastikan sudah menjalankan SQL di SETUP_DATABASE.md
+          </p>
+          <a href="/" className="btn btn-primary">Kembali ke Beranda</a>
+        </div>
       </div>
     )
   }
