@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import { compressImage } from '@/lib/imageUtils'
 
@@ -45,57 +45,81 @@ export default function AdminDashboard({ profile, entriesCount, onProfileUpdate 
     finally { setSaving(false) }
   }
 
+  const handleThemeChange = async (themeName: string) => {
+    setSaving(true)
+    try {
+      const { error: e } = await (supabase.from('profiles') as any).update({ theme: themeName }).eq('id', profile.id)
+      if (e) throw e
+      onProfileUpdate({ ...profile, theme: themeName })
+      document.body.className = `theme-${themeName}`
+    } catch (e: any) { setError(e.message) }
+    finally { setSaving(false) }
+  }
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8">
         <div className="flex gap-10">
           <div className="text-center">
-            <div className="text-3xl font-bold text-white">{entriesCount}</div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-[#9e9587] mt-1">Jurnal</div>
+            <div className="text-3xl font-bold text-white display-font">{entriesCount}</div>
+            <div className="text-[11px] uppercase tracking-widest text-[#8c8278] mt-1">Jurnal</div>
           </div>
           <div className="text-center">
-            <div className="text-sm text-white mt-2">{new Date(profile.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-[#9e9587] mt-1">Bergabung</div>
+            <div className="text-sm text-white font-medium mt-2">{new Date(profile.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+            <div className="text-[11px] uppercase tracking-widest text-[#8c8278] mt-1">Bergabung</div>
           </div>
         </div>
-        <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => setShowSettings(!showSettings)} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[#9e9587] text-sm hover:text-white hover:bg-white/10 transition">
-          {showSettings ? 'Tutup' : 'Pengaturan'}
-        </motion.button>
+        <button onClick={() => setShowSettings(!showSettings)} className="btn-custom btn-ghost text-xs">
+          {showSettings ? 'Tutup Settings' : 'Pengaturan Profile'}
+        </button>
       </div>
 
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="glass-card p-8 mb-8 overflow-hidden">
-            <h3 className="text-lg font-bold text-white mb-6 pb-4 border-b border-white/10">Pengaturan Admin</h3>
-            {error && <p className="text-xs text-red-400 bg-red-900/10 p-3 rounded-xl mb-4 text-center">{error}</p>}
-            {success && <p className="text-xs text-[#c49a6c] bg-[#c49a6c]/10 p-3 rounded-xl mb-4 text-center">{success}</p>}
-            <div className="grid grid-cols-2 gap-8">
-              <div>
-                <h4 className="text-[10px] uppercase tracking-[0.2em] text-[#9e9587] mb-5">Avatar</h4>
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-[#1c1a18] border border-[#3c352e] flex items-center justify-center text-[#c49a6c] text-lg font-semibold overflow-hidden">
-                    {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : profile.name.charAt(0)}
-                  </div>
-                  <div className="flex-1">
-                    <input type="file" accept="image/*" onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} className="text-xs text-[#9e9587] mb-2 w-full" />
-                    {avatarFile && <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={handleAvatarUpload} disabled={saving} className="w-full py-2 rounded-xl bg-[#c49a6c] text-[#0d0c0b] text-xs font-semibold">{saving ? '...' : 'Upload'}</motion.button>}
-                  </div>
-                </div>
-              </div>
-              <div>
-                <h4 className="text-[10px] uppercase tracking-[0.2em] text-[#9e9587] mb-5">Password</h4>
-                <div className="space-y-3">
-                  <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Password baru" className="w-full px-5 py-2.5 bg-[#1c1a18] border border-[#3c352e] rounded-xl text-white text-sm focus:outline-none focus:border-[#c49a6c] transition" />
-                  <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Konfirmasi" className="w-full px-5 py-2.5 bg-[#1c1a18] border border-[#3c352e] rounded-xl text-white text-sm focus:outline-none focus:border-[#c49a6c] transition" />
-                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={handlePasswordChange} disabled={saving} className="w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-medium hover:bg-white/10 transition">
-                    {saving ? 'Menyimpan...' : 'Simpan Password'}
-                  </motion.button>
-                </div>
+      {showSettings && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-8 mb-8">
+          <h3 className="text-lg font-bold text-white mb-6 display-font">Settings Admin</h3>
+          {error && <p className="text-xs text-red-400 bg-red-950/30 p-3 rounded-lg mb-4 border border-red-900/50">{error}</p>}
+          {success && <p className="text-xs text-emerald-400 bg-emerald-950/30 p-3 rounded-lg mb-4 border border-emerald-900/50">{success}</p>}
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h4 className="text-xs uppercase tracking-widest text-[#8c8278] mb-4">Pilih Theme</h4>
+              <div className="flex flex-col gap-2">
+                {['mocha', 'forest', 'midnight'].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => handleThemeChange(t)}
+                    className={`px-4 py-2.5 rounded-xl border text-xs capitalize text-left transition ${
+                      (profile.theme || 'mocha') === t ? 'border-[#d4a373] bg-[#d4a373]/10 text-white font-semibold' : 'border-white/5 text-[#8c8278] hover:bg-white/5'
+                    }`}
+                  >
+                    🎨 {t}
+                  </button>
+                ))}
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+            <div>
+              <h4 className="text-xs uppercase tracking-widest text-[#8c8278] mb-4">Ganti Avatar</h4>
+              <div className="flex flex-col gap-3">
+                <div className="w-12 h-12 rounded-full bg-[#141210] border border-white/10 flex items-center justify-center text-[#d4a373] text-lg font-bold overflow-hidden">
+                  {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : profile.name.charAt(0)}
+                </div>
+                <input type="file" accept="image/*" onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} className="text-xs text-[#8c8278]" />
+                {avatarFile && <button onClick={handleAvatarUpload} disabled={saving} className="btn-custom btn-primary text-xs mt-1">{saving ? '...' : 'Upload Avatar'}</button>}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-xs uppercase tracking-widest text-[#8c8278] mb-4">Ganti Password</h4>
+              <div className="space-y-3">
+                <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Password baru" className="input-field text-xs" />
+                <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Konfirmasi" className="input-field text-xs" />
+                <button onClick={handlePasswordChange} disabled={saving} className="btn-custom btn-ghost text-xs w-full">{saving ? '...' : 'Update Password'}</button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   )
 }
