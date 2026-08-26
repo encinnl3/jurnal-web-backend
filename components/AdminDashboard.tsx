@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import { compressImage } from '@/lib/imageUtils'
 
