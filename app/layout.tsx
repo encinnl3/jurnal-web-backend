@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Jurnal PKL",
+  title: "Jurnal PKL | Simply® Style",
   description: "Sistem pencatatan kegiatan harian PKL",
 };
 
