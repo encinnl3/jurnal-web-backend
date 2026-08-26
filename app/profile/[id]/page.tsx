@@ -16,43 +16,41 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
 
   useEffect(() => {
     const session = localStorage.getItem('jurnal-session')
-    if (!session) { window.location.href = `/visitor/${id}`; return }
-    
+    if (!session) {
+      setRedirecting(true)
+      window.location.href = `/visitor/${id}`
+      return
+    }
     try {
       const { profileId } = JSON.parse(session)
       if (profileId !== id) {
-        localStorage.removeItem('jurnal-session') // Sesi tidak valid, hapus
+        localStorage.removeItem('jurnal-session')
+        setRedirecting(true)
         window.location.href = `/visitor/${id}`
         return
       }
-      setIsAdmin(true)
-    } catch (e) {
+    } catch {
       localStorage.removeItem('jurnal-session')
+      setRedirecting(true)
       window.location.href = `/visitor/${id}`
+      return
     }
-  }, [id])
 
-  useEffect(() => {
     const fetchData = async () => {
-      const { data: p, error: pErr } = await (supabase.from('profiles') as any).select('*').eq('id', id)
-      
-      if (pErr || !p || p.length === 0) {
-        // Profile tidak ditemukan di DB, sesi admin otomatis hanguskan
-        localStorage.removeItem('jurnal-session')
-        window.location.href = '/'
-        return
+      const { data: p } = await (supabase.from('profiles') as any).select('*').eq('id', id)
+      if (p && p.length > 0) {
+        setProfile(p[0])
       }
-      
-      setProfile(p[0])
       const { data: e } = await (supabase.from('jurnal_entries') as any).select('*').eq('profile_id', id).order('day', { ascending: true })
       setEntries(e || [])
       setLoading(false)
     }
     fetchData()
+
     const ch = supabase.channel(`a-${id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'jurnal_entries', filter: `profile_id=eq.${id}` }, (p) => {
       if (p.eventType === 'INSERT') setEntries((x) => [...x, p.new].sort((a, b) => a.day - b.day))
       else if (p.eventType === 'UPDATE') setEntries((x) => x.map((e) => e.id === p.new.id ? p.new : e))
@@ -61,8 +59,16 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     return () => supabase.removeChannel(ch)
   }, [id])
 
-  if (loading || !isAdmin) return <div className="min-h-screen flex items-center justify-center bg-[#0d0c0b] text-[#9e9587]">Loading...</div>
-  if (!profile) return <div className="min-h-screen flex items-center justify-center bg-[#0d0c0b] text-[#9e9587]">Tidak ditemukan</div>
+  if (redirecting) return <div className="min-h-screen flex items-center justify-center bg-[#0d0c0b] text-[#9e9587]">Mengalihkan...</div>
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#0d0c0b] text-[#9e9587]">Loading...</div>
+  if (!profile) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0d0c0b]">
+      <div className="glass-card p-12 text-center">
+        <p className="text-[#9e9587] mb-6">Profile tidak ditemukan</p>
+        <a href="/" className="px-6 py-3 rounded-full bg-white/10 text-white text-sm">Kembali ke Beranda</a>
+      </div>
+    </div>
+  )
 
   return (
     <div className="relative min-h-screen bg-[#0d0c0b] overflow-hidden">
@@ -110,7 +116,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
             <AnimatePresence>
               {entries.map((entry) => (
                 <motion.div key={entry.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                  <JurnalEntryCard entry={entry} onDelete={() => { if (confirm('Hapus?')) (supabase.from('jurnal_entries') as any).delete().eq('id', entry.id); setEntries((p) => p.filter((e) => e.id !== entry.id)) }} onChanged={(u) => setEntries((p) => p.map((e) => e.id === u.id ? u : e).sort((a, b) => a.day - b.day))} />
+                  <JurnalEntryCard entry={entry} onDelete={() => { if (confirm('Hapus?')) { (supabase.from('jurnal_entries') as any).delete().eq('id', entry.id); setEntries((p) => p.filter((e) => e.id !== entry.id)) } }} onChanged={(u) => setEntries((p) => p.map((e) => e.id === u.id ? u : e).sort((a, b) => a.day - b.day))} />
                 </motion.div>
               ))}
             </AnimatePresence>
