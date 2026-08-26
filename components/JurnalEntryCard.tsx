@@ -57,8 +57,8 @@ export default function JurnalEntryCard({ entry, onDelete, onChanged }: { entry:
            </div>
           ) : (
             <div className="flex items-center gap-3">
-              <span className="px-3 py-1 rounded-md bg-[#c49a6c]/10 text-[#c49a6c] text-xs font-semibold">Day {entry.day</span>
-              <h2 className="font-semibold text-white text-base truncate">{entry.title</h2>
+              <span className="px-3 py-1 rounded-md bg-[#c49a6c]/10 text-[#c49a6c] text-xs font-semibold">Day {entry.day}</span>
+              <h2 className="font-semibold text-white text-base truncate">{entry.title}</h2>
            </div>
           )}
        </div>
@@ -66,7 +66,7 @@ export default function JurnalEntryCard({ entry, onDelete, onChanged }: { entry:
           {editing ? (
             <>
               <button onClick={cancelEdit} className="px-3 py-1.5 rounded-lg bg-white/5 text-[#9e9587] hover:bg-white/10 text-xs transition">Batal</button>
-              <button onClick={handleSave} disabled={saving} className="px-3 py-1.5 rounded-lg bg-[#c49a6c] text-[#0d0c0b] text-xs font-semibold hover:opacity-90 transition">{saving ? '...' : 'Simpan'</button>
+              <button onClick={handleSave} disabled={saving} className="px-3 py-1.5 rounded-lg bg-[#c49a6c] text-[#0d0c0b] text-xs font-semibold hover:opacity-90 transition">{saving ? '...' : 'Simpan'}</button>
             </>
           ) : (
             <>
@@ -106,7 +106,7 @@ export default function JurnalEntryCard({ entry, onDelete, onChanged }: { entry:
           {editing ? (
             <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows={5} className="w-full px-4 py-3 bg-[#1c1a18] border border-[#3c352e] rounded-xl text-white text-sm focus:outline-none focus:border-[#c49a6c] resize-none leading-relaxed" />
           ) : (
-            <p className="text-[#9e9587] text-sm leading-relaxed whitespace-pre-wrap font-light">{entry.deskripsi</p>
+            <p className="text-[#9e9587] text-sm leading-relaxed whitespace-pre-wrap font-light">{entry.deskripsi}</p>
           )}
        </div>
         <div className="mt-5 pt-4 border-t border-white/10">
