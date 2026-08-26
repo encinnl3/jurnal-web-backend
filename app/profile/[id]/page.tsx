@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import type { Profile, JurnalEntry } from '@/lib/types'
+import type { Profile } from '@/lib/types'
 import JurnalForm from '@/components/JurnalForm'
 import JurnalEntryCard from '@/components/JurnalEntryCard'
 import AdminDashboard from '@/components/AdminDashboard'
@@ -11,8 +11,8 @@ export const dynamic = 'force-dynamic'
 
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [entries, setEntries] = useState<JurnalEntry[]>([])
+  const [profile, setProfile] = useState<any>(null)
+  const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -35,9 +35,9 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     }
     fetchData()
     const ch = supabase.channel(`a-${id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'jurnal_entries', filter: `profile_id=eq.${id}` }, (p) => {
-      if (p.eventType === 'INSERT') setEntries((x) => [...x, p.new as JurnalEntry].sort((a, b) => a.day - b.day))
-      else if (p.eventType === 'UPDATE') setEntries((x) => x.map((e) => e.id === (p.new as JurnalEntry).id ? (p.new as JurnalEntry) : e))
-      else if (p.eventType === 'DELETE') setEntries((x) => x.filter((e) => e.id !== (p.old as JurnalEntry).id))
+      if (p.eventType === 'INSERT') setEntries((x) => [...x, p.new].sort((a: any, b: any) => a.day - b.day))
+      else if (p.eventType === 'UPDATE') setEntries((x) => x.map((e: any) => e.id === p.new.id ? p.new : e))
+      else if (p.eventType === 'DELETE') setEntries((x) => x.filter((e: any) => e.id !== p.old.id))
     }).subscribe()
     return () => supabase.removeChannel(ch)
   }, [id])
