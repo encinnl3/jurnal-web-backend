@@ -1,15 +1,16 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { use, useEffect, useState, Suspense } from 'react'
+import dynamic from 'next/dynamic'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
-import type { Profile, JurnalEntry } from '@/lib/types'
 
-export const dynamic = 'force-dynamic'
+const ThreeBackground = dynamic(() => import('@/components/ThreeBackground'), { ssr: false })
 
 export default function VisitorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [entries, setEntries] = useState<JurnalEntry[]>([])
+  const [profile, setProfile] = useState<any>(null)
+  const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [password, setPassword] = useState('')
@@ -25,9 +26,9 @@ export default function VisitorPage({ params }: { params: Promise<{ id: string }
     }
     fetchData()
     const ch = supabase.channel(`v-${id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'jurnal_entries', filter: `profile_id=eq.${id}` }, (p) => {
-      if (p.eventType === 'INSERT') setEntries((x) => [...x, p.new as JurnalEntry].sort((a, b) => a.day - b.day))
-      else if (p.eventType === 'UPDATE') setEntries((x) => x.map((e) => e.id === (p.new as JurnalEntry).id ? (p.new as JurnalEntry) : e))
-      else if (p.eventType === 'DELETE') setEntries((x) => x.filter((e) => e.id !== (p.old as JurnalEntry).id))
+      if (p.eventType === 'INSERT') setEntries((x) => [...x, p.new].sort((a, b) => a.day - b.day))
+      else if (p.eventType === 'UPDATE') setEntries((x) => x.map((e) => e.id === p.new.id ? p.new : e))
+      else if (p.eventType === 'DELETE') setEntries((x) => x.filter((e) => e.id !== p.old.id))
     }).subscribe()
     return () => supabase.removeChannel(ch)
   }, [id])
@@ -40,85 +41,147 @@ export default function VisitorPage({ params }: { params: Promise<{ id: string }
     window.location.href = `/profile/${profile.id}`
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-[#9c8b78]">Memuat...</div>
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0c0a09] text-stone-400">Loading...</div>
+  )
+
   if (!profile) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center p-12">
-        <p className="text-lg text-[#6b5e4e] mb-8">Profile tidak ditemukan</p>
-        <a href="/" className="btn btn-primary">Kembali</a>
+    <div className="min-h-screen flex items-center justify-center bg-[#0c0a09]">
+      <div className="glass-card p-12 text-center">
+        <p className="text-stone-400 mb-6">Profile tidak ditemukan</p>
+        <a href="/" className="px-6 py-3 rounded-full bg-white text-black font-semibold">Kembali</a>
       </div>
     </div>
   )
 
   return (
-    <main className="min-h-screen">
-      <section className="section-hero container-app" style={{paddingBottom: 0}}>
-        <a href="/" className="tag mb-8">← Kembali</a>
-        <div className="flex items-center justify-center gap-6 mb-8">
-          <div className="w-20 h-20 rounded-full bg-[#b09678] flex items-center justify-center text-white font-bold text-4xl overflow-hidden shadow-lg">
-            {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : profile.name.charAt(0)}
-          </div>
-        </div>
-        <h1 className="heading-xl display text-[#2c2418]">{profile.name}</h1>
-        <p className="text-xl text-[#6b5e4e] max-w-md mx-auto font-light">
-          Berikut adalah catatan harian selama menjalankan Praktik Kerja Lapangan.
-        </p>
-        <div className="mt-8">
-          <button onClick={() => setShowModal(true)} className="btn btn-secondary">Admin</button>
-        </div>
-      </section>
+    <div className="relative min-h-screen bg-[#0c0a09] overflow-hidden">
+      <Suspense fallback={null}>
+        <ThreeBackground />
+      </Suspense>
 
-      <section className="container-app section" style={{paddingTop: 40}}>
+      <div className="relative z-10 max-w-3xl mx-auto px-6 py-12">
+        <motion.a 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          href="/" 
+          className="inline-block text-amber-500 text-sm uppercase tracking-widest mb-12 hover:opacity-70 transition"
+        >
+          ← Kembali
+        </motion.a>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="glass-card p-10 mb-12"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-amber-800 flex items-center justify-center text-white text-xl font-bold overflow-hidden shadow-lg shadow-amber-900/20">
+                {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : profile.name.charAt(0)}
+              </div>
+              <div>
+                <p className="text-stone-500 text-xs uppercase tracking-widest mb-1">Profile</p>
+                <h1 className="text-3xl font-bold text-white" style={{fontFamily: "'Playfair Display', serif"}}>
+                  {profile.name}
+                </h1>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowModal(true)}
+              className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white text-sm font-medium hover:bg-white/10 transition"
+            >
+              Admin
+            </motion.button>
+          </div>
+        </motion.div>
+
+        <h2 className="text-xl text-white mb-6 font-light">Jurnal <span className="text-amber-500">({entries.length})</span></h2>
+
         {entries.length === 0 ? (
-          <div className="text-center py-20 text-[#9c8b78] text-lg">Belum ada jurnal.</div>
+          <div className="glass-card p-16 text-center text-stone-500">Belum ada jurnal</div>
         ) : (
-          <div className="space-y-8">
-            {entries.map((entry) => (
-              <article key={entry.id} className="bg-white rounded-[24px] border border-[#e8e2d9] overflow-hidden hover:shadow-md transition-shadow">
-                {entry.foto_url && (
-                  <div className="w-full h-[280px]">
-                    <img src={entry.foto_url} alt={entry.title} className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <div className="p-8">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="tag" style={{padding: '5px 14px'}}>Day {entry.day}</span>
-                    <h2 className="font-semibold text-lg text-[#2c2418]">{entry.title}</h2>
-                  </div>
-                  <div className="pl-5 border-l-2 border-[#b09678]">
-                    <p className="text-[#6b5e4e] text-sm leading-relaxed whitespace-pre-wrap font-light">
+          <div className="space-y-6">
+            <AnimatePresence>
+              {entries.map((entry, i) => (
+                <motion.div
+                  key={entry.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  className="glass-card overflow-hidden"
+                >
+                  {entry.foto_url && (
+                    <div className="w-full h-72 overflow-hidden">
+                      <img src={entry.foto_url} alt={entry.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="p-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="px-3 py-1 rounded-md bg-amber-600/20 text-amber-400 text-xs font-semibold">
+                        Day {entry.day}
+                      </span>
+                      <h3 className="text-white font-semibold text-lg flex-1">{entry.title}</h3>
+                    </div>
+                    <p className="text-stone-400 text-sm leading-relaxed whitespace-pre-wrap font-light mb-4">
                       {entry.deskripsi}
                     </p>
-                  </div>
-                  <div className="mt-6 pt-4 border-t border-[#f5f0e8]">
-                    <time className="text-[10px] uppercase tracking-[0.2em] text-[#b09678] font-semibold">
+                    <p className="text-stone-600 text-xs uppercase tracking-widest">
                       {new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </time>
+                    </p>
                   </div>
-                </div>
-              </article>
-            ))}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
-      </section>
+      </div>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-6" onClick={() => { setShowModal(false); setPassword(''); setError('') }}>
-          <div className="bg-white rounded-[40px] p-12 max-w-md w-full border border-[#e8e2d9] shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="heading-md display text-[#2c2418]">Admin Panel</h2>
-            <p className="text-sm text-[#9c8b78] mb-8 uppercase tracking-wider">Masukkan password</p>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••" autoFocus
-              className="w-full px-6 py-4 bg-[#f9f7f2] border border-[#e8e2d9] rounded-full mb-6 text-center tracking-[0.5em] focus:outline-none focus:border-[#b09678]"
-              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-            />
-            {error && <p className="text-sm text-red-500 bg-red-50 p-4 rounded-2xl mb-6 text-center">{error}</p>}
-            <div className="flex gap-4">
-              <button onClick={() => { setShowModal(false); setPassword(''); setError('') }} className="btn btn-secondary flex-1">Batal</button>
-              <button onClick={handleLogin} className="btn btn-primary flex-1">Masuk</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-6"
+            onClick={() => { setShowModal(false); setPassword(''); setError('') }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="glass-card p-10 max-w-md w-full"
+            >
+              <h2 className="text-2xl font-bold text-white mb-2" style={{fontFamily: "'Playfair Display', serif"}}>
+                Admin Panel
+              </h2>
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-8">Masukkan Password</p>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••"
+                autoFocus
+                className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-full mb-6 text-white text-center tracking-[0.5em] focus:outline-none focus:border-amber-600"
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              />
+              {error && <p className="text-sm text-red-400 bg-red-900/20 p-3 rounded-xl mb-6 text-center">{error}</p>}
+              <div className="flex gap-3">
+                <button onClick={() => { setShowModal(false); setPassword(''); setError('') }} className="flex-1 py-3 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition">
+                  Batal
+                </button>
+                <button onClick={handleLogin} className="flex-1 py-3 rounded-full bg-amber-600 text-white font-semibold hover:bg-amber-700 transition">
+                  Masuk
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
