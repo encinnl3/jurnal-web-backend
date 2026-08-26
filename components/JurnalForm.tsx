@@ -25,12 +25,31 @@ export default function JurnalForm({ profileId, onSuccess }: { profileId: string
     e.preventDefault()
     if (!title.trim() || !deskripsi.trim()) { setError('Judul & deskripsi wajib'); return }
     setLoading(true); setError(null)
-    let fotoUrl: string | null = null
-    if (foto) { fotoUrl = await uploadFoto(foto); if (!fotoUrl) { setLoading(false); return } }
-    const { error: ie } = await (supabase.from('jurnal_entries') as any).insert({ profile_id: profileId, day, title: title.trim(), deskripsi: deskripsi.trim(), foto_url: fotoUrl })
-    setLoading(false)
-    if (ie) { setError(ie.message); return }
-    setDay(day + 1); setTitle(''); setDeskripsi(''); setFoto(null); onSuccess()
+
+    try {
+      let fotoUrl: string | null = null
+      if (foto) {
+        fotoUrl = await uploadFoto(foto)
+        if (!fotoUrl) return // uploadFoto sudah handle set error
+      }
+
+      const { error: ie } = await (supabase.from('jurnal_entries') as any).insert({
+        profile_id: profileId,
+        day,
+        title: title.trim(),
+        deskripsi: deskripsi.trim(),
+        foto_url: fotoUrl,
+      })
+
+      if (ie) throw ie
+
+      setDay(day + 1); setTitle(''); setDeskripsi(''); setFoto(null); onSuccess()
+    } catch (e: any) {
+      console.error('Form Error:', e)
+      setError(e.message || 'Gagal menyimpan')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

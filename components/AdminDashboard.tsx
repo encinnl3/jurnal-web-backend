@@ -19,26 +19,30 @@ export default function AdminDashboard({ profile, entriesCount, onProfileUpdate 
     if (newPassword !== confirmPassword) { setError('Tidak cocok'); return }
     if (newPassword.length < 6) { setError('Minimal 6 karakter'); return }
     setSaving(true); setError('')
-    const { error: e } = await (supabase.from('profiles') as any).update({ password: newPassword }).eq('id', profile.id)
-    setSaving(false)
-    if (e) { setError(e.message); return }
-    setSuccess('Password diubah!'); setNewPassword(''); setConfirmPassword('')
-    setTimeout(() => setSuccess(''), 3000)
+    try {
+      const { error: e } = await (supabase.from('profiles') as any).update({ password: newPassword }).eq('id', profile.id)
+      if (e) throw e
+      setSuccess('Password diubah!'); setNewPassword(''); setConfirmPassword('')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (e: any) { setError(e.message) }
+    finally { setSaving(false) }
   }
 
   const handleAvatarUpload = async () => {
     if (!avatarFile) return
     setSaving(true); setError('')
-    const compressed = await compressImage(avatarFile, 400, 0.8)
-    const fileName = profile.id + '/avatar.jpg'
-    const { error: ue } = await supabase.storage.from('avatars').upload(fileName, compressed, { upsert: true })
-    if (ue) { setError(ue.message); setSaving(false); return }
-    const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
-    const { error: ue2 } = await (supabase.from('profiles') as any).update({ avatar_url: data.publicUrl }).eq('id', profile.id)
-    setSaving(false)
-    if (ue2) { setError(ue2.message); return }
-    onProfileUpdate({ ...profile, avatar_url: data.publicUrl }); setAvatarFile(null)
-    setSuccess('Avatar diubah!'); setTimeout(() => setSuccess(''), 3000)
+    try {
+      const compressed = await compressImage(avatarFile, 400, 0.8)
+      const fileName = profile.id + '/avatar.jpg'
+      const { error: ue } = await supabase.storage.from('avatars').upload(fileName, compressed, { upsert: true })
+      if (ue) throw ue
+      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
+      const { error: ue2 } = await (supabase.from('profiles') as any).update({ avatar_url: data.publicUrl }).eq('id', profile.id)
+      if (ue2) throw ue2
+      onProfileUpdate({ ...profile, avatar_url: data.publicUrl }); setAvatarFile(null)
+      setSuccess('Avatar diubah!'); setTimeout(() => setSuccess(''), 3000)
+    } catch (e: any) { setError(e.message) }
+    finally { setSaving(false) }
   }
 
   return (
