@@ -50,7 +50,7 @@ export default function JurnalEntryCard({ entry, onDelete, onChanged }: { entry:
           ) : (
             <div className="flex items-center gap-3">
               <span className="tag" style={{padding: '5px 14px'}}>Day {entry.day</span>
-              <h2 className="font-semibold text-lg text-[#2c2418] truncate">{entry.title</h2>
+              <h2 className="font-semibold text-lg text-[#2c2418] truncate">{entry.title}</h2>
            </div>
           )}
        </div>
@@ -74,13 +74,16 @@ export default function JurnalEntryCard({ entry, onDelete, onChanged }: { entry:
           <div className="relative inline-block">
             <img src={entry.foto_url} alt="" className="w-24 h-24 rounded-2xl object-cover border border-[#e8e2d9]" />
             <button onClick={removeFoto} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-sm flex items-center justify-center">×</button>
-         </div>
-       </div>
+          </div>
+        </div>
       )}
       {editing && (
         <div className="px-6 pt-3">
-          <label className="inline-block text-xs px-4 py-2 border border-dashed border-[#b09678] rounded-full text-[#6b5e4e] cursor-pointer hover:bg-[#f9f7f2]">{foto ? foto.name : '+ Ganti foto'}<input type="file" accept="image/*" onChange={(e) => setFoto(e.target.files?.[0] || null)} className="hidden"</label>
-       </div>
+          <label className="inline-block text-xs px-4 py-2 border border-dashed border-[#b09678] rounded-full text-[#6b5e4e] cursor-pointer hover:bg-[#f9f7f2]">
+            {foto ? foto.name : '+ Ganti foto'}
+            <input type="file" accept="image/*" onChange={(e) => setFoto(e.target.files?.[0] || null)} className="hidden" />
+          </label>
+        </div>
       )}
 
       {entry.foto_url && !editing && (
@@ -94,7 +97,7 @@ export default function JurnalEntryCard({ entry, onDelete, onChanged }: { entry:
           {editing ? (
             <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows={5} className="w-full px-4 py-3 bg-[#f9f7f2] border border-[#e8e2d9] rounded-2xl text-sm focus:outline-none focus:border-[#b09678] resize-none leading-relaxed" />
           ) : (
-            <p className="text-[#6b5e4e] text-sm leading-relaxed whitespace-pre-wrap font-light">{entry.deskripsi</p>
+            <p className="text-[#6b5e4e] text-sm leading-relaxed whitespace-pre-wrap font-light">{entry.deskripsi}</p>
           )}
        </div>
         <div className="mt-5 pt-4 border-t border-[#f5f0e8]">
