@@ -33,27 +33,41 @@ export default function AdminDashboard({ profile, entriesCount, onProfileUpdate 
     setSaving(true); setError('')
     try {
       const compressed = await compressImage(avatarFile, 400, 0.8)
-      const fileName = profile.id + '/avatar.jpg'
-      const { error: ue } = await supabase.storage.from('avatars').upload(fileName, compressed, { upsert: true })
+      // Unikkan nama file agar selalu replace bersih
+      const fileName = profile.id + '/avatar-' + Date.now() + '.jpg'
+      const { error: ue } = await supabase.storage.from('avatars').upload(fileName, compressed, { upsert: false })
       if (ue) throw ue
       const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
-      const { error: ue2 } = await (supabase.from('profiles') as any).update({ avatar_url: data.publicUrl }).eq('id', profile.id)
+      const cacheBuster = '?t=' + Date.now()
+      const { error: ue2 } = await (supabase.from('profiles') as any).update({ avatar_url: data.publicUrl + cacheBuster }).eq('id', profile.id)
       if (ue2) throw ue2
-      onProfileUpdate({ ...profile, avatar_url: data.publicUrl }); setAvatarFile(null)
+      onProfileUpdate({ ...profile, avatar_url: data.publicUrl + cacheBuster }); setAvatarFile(null)
       setSuccess('Avatar diubah!'); setTimeout(() => setSuccess(''), 3000)
     } catch (e: any) { setError(e.message) }
     finally { setSaving(false) }
   }
 
   const handleThemeChange = async (themeName: string) => {
-    setSaving(true)
+    setSaving(true); setError('')
     try {
       const { error: e } = await (supabase.from('profiles') as any).update({ theme: themeName }).eq('id', profile.id)
-      if (e) throw e
+      if (e) {
+        // Jika kolom theme belum ada, abaikan
+        if (e.message?.includes('theme')) {
+          onProfileUpdate({ ...profile, theme: themeName })
+          document.body.className = `theme-${themeName}`
+          return
+        }
+        throw e
+      }
       onProfileUpdate({ ...profile, theme: themeName })
       document.body.className = `theme-${themeName}`
-    } catch (e: any) { setError(e.message) }
-    finally { setSaving(false) }
+    } catch (e: any) {
+      console.warn('Theme update failed:', e.message)
+      // Tetap apply lokal meski DB gagal
+      onProfileUpdate({ ...profile, theme: themeName })
+      document.body.className = `theme-${themeName}`
+    } finally { setSaving(false) }
   }
 
   return (
