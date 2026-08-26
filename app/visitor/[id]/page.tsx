@@ -1,9 +1,12 @@
 'use client'
 
-import { use, useEffect, useState, Suspense } from 'react'
+import { use, useEffect, useState, Suspense, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
+import JurnalForm from '@/components/JurnalForm'
+import JurnalEntryCard from '@/components/JurnalEntryCard'
+import AdminDashboard from '@/components/AdminDashboard'
 
 const ThreeBackground = dynamic(() => import('@/components/ThreeBackground'), { ssr: false })
 
@@ -15,8 +18,19 @@ export default function VisitorPage({ params }: { params: Promise<{ id: string }
   const [showModal, setShowModal] = useState(false)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
+    // Check local session
+    const session = localStorage.getItem('jurnal-session')
+    if (session) {
+      try {
+        const { profileId } = JSON.parse(session)
+        if (profileId === id) setIsAdmin(true)
+      } catch {}
+    }
+
     const fetchData = async () => {
       const { data: p } = await (supabase.from('profiles') as any).select('*').eq('id', id)
       if (p?.length > 0) setProfile(p[0])
@@ -25,20 +39,31 @@ export default function VisitorPage({ params }: { params: Promise<{ id: string }
       setLoading(false)
     }
     fetchData()
-    const ch = supabase.channel(`v-${id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'jurnal_entries', filter: `profile_id=eq.${id}` }, (p) => {
+
+    const channel = supabase.channel(`page-${id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'jurnal_entries', filter: `profile_id=eq.${id}` }, (p) => {
       if (p.eventType === 'INSERT') setEntries((x) => [...x, p.new].sort((a, b) => a.day - b.day))
       else if (p.eventType === 'UPDATE') setEntries((x) => x.map((e) => e.id === p.new.id ? p.new : e))
       else if (p.eventType === 'DELETE') setEntries((x) => x.filter((e) => e.id !== p.old.id))
     }).subscribe()
-    return () => supabase.removeChannel(ch)
+
+    return () => supabase.removeChannel(channel)
   }, [id])
 
   const handleLogin = async () => {
     setError('')
     if (!profile) return
     if (profile.password !== password) { setError('Password salah'); return }
+    
     localStorage.setItem('jurnal-session', JSON.stringify({ profileId: profile.id, name: profile.name }))
-    window.location.href = `/profile/${profile.id}`
+    setIsAdmin(true)
+    setShowModal(false)
+    setPassword('')
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('jurnal-session')
+    setIsAdmin(false)
+    setShowForm(false)
   }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#0d0c0b] text-[#9e9587]">Loading...</div>
@@ -57,54 +82,101 @@ export default function VisitorPage({ params }: { params: Promise<{ id: string }
 
       <div className="relative z-10 max-w-3xl mx-auto px-6 py-12">
         <motion.a initial={{ opacity: 0 }} animate={{ opacity: 1 }} href="/" className="inline-block text-[#9e9587] text-xs uppercase tracking-[0.15em] mb-12 hover:text-white transition">
-          ← Kembali
+          ← Kembali ke Beranda
         </motion.a>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="glass-card p-8 mb-12">
-          <div className="flex items-center gap-5">
-            <div className="w-14 h-14 rounded-full bg-[#1c1a18] border border-[#3c352e] flex items-center justify-center text-[#c49a6c] text-lg font-semibold overflow-hidden">
-              {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : profile.name.charAt(0)}
+        {/* Profile Card Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="glass-card p-8 mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 rounded-full bg-[#1c1a18] border border-[#3c352e] flex items-center justify-center text-[#c49a6c] text-xl font-semibold overflow-hidden">
+                {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : profile.name.charAt(0)}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-[#9e9587] text-[10px] uppercase tracking-[0.2em]">Profile</p>
+                  {isAdmin && <span className="text-[9px] uppercase tracking-[0.1em] px-2 py-0.5 rounded bg-[#c49a6c]/20 text-[#c49a6c] font-semibold">Mode Admin</span>}
+                </div>
+                <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.name}</h1>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-[#9e9587] text-[10px] uppercase tracking-[0.2em] mb-1">Profile</p>
-              <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.name}</h1>
-            </div>
+
+            {isAdmin && (
+              <button onClick={handleLogout} className="text-[#9e9587] text-[10px] uppercase tracking-[0.15em] hover:text-white transition">
+                Keluar Admin
+              </button>
+            )}
           </div>
         </motion.div>
 
-        <h2 className="text-lg text-white/80 mb-6 font-light">Jurnal <span className="text-[#c49a6c]">({entries.length})</span></h2>
+        {/* Admin Dashboard Controls (Hanya muncul jika mode admin aktif) */}
+        {isAdmin && (
+          <div className="mb-10">
+            <AdminDashboard profile={profile} entriesCount={entries.length} onProfileUpdate={(p) => setProfile(p)} />
+          </div>
+        )}
 
+        {/* Header Jurnal + Button Tambah jika Admin */}
+        <div className="flex items-center justify-between mt-12 mb-6">
+          <h2 className="text-xl font-bold text-white">Jurnal <span className="text-[#c49a6c]">({entries.length})</span></h2>
+          {isAdmin && (
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => setShowForm((s) => !s)} className="px-5 py-2.5 rounded-xl bg-[#c49a6c] text-[#0d0c0b] text-sm font-semibold hover:opacity-90 transition">
+              {showForm ? 'Tutup' : '+ Tambah Jurnal'}
+            </motion.button>
+          )}
+        </div>
+
+        {/* Form Tambah Jurnal (Hanya Admin) */}
+        <AnimatePresence>
+          {isAdmin && showForm && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-8 overflow-hidden">
+              <JurnalForm profileId={id} onSuccess={() => setShowForm(false)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Daftar Jurnal */}
         {entries.length === 0 ? (
           <div className="glass-card p-16 text-center text-[#9e9587] text-sm">Belum ada jurnal.</div>
         ) : (
           <div className="space-y-5">
             <AnimatePresence>
-              {entries.map((entry, i) => (
-                <motion.div key={entry.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.05 }} className="glass-card overflow-hidden">
-                  {entry.foto_url && <img src={entry.foto_url} alt={entry.title} className="w-full h-64 object-cover" />}
-                  <div className="p-7">
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="px-3 py-1 rounded-md bg-[#c49a6c]/10 text-[#c49a6c] text-xs font-semibold">Day {entry.day}</span>
-                      <h3 className="text-white font-semibold text-lg">{entry.title}</h3>
+              {entries.map((entry) => (
+                <motion.div key={entry.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                  {isAdmin ? (
+                    <JurnalEntryCard entry={entry} onDelete={() => { if (confirm('Hapus?')) { (supabase.from('jurnal_entries') as any).delete().eq('id', entry.id); setEntries((p) => p.filter((e) => e.id !== entry.id)) } }} onChanged={(u) => setEntries((p) => p.map((e) => e.id === u.id ? u : e).sort((a, b) => a.day - b.day))} />
+                  ) : (
+                    <div className="glass-card overflow-hidden">
+                      {entry.foto_url && <img src={entry.foto_url} alt={entry.title} className="w-full h-64 object-cover" />}
+                      <div className="p-7">
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className="px-3 py-1 rounded-md bg-[#c49a6c]/10 text-[#c49a6c] text-xs font-semibold">Day {entry.day}</span>
+                          <h3 className="text-white font-semibold text-lg">{entry.title}</h3>
+                        </div>
+                        <p className="text-[#9e9587] text-sm leading-relaxed whitespace-pre-wrap font-light mb-5">{entry.deskripsi}</p>
+                        <p className="text-[#5c554c] text-[10px] uppercase tracking-[0.15em]">
+                          {new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[#9e9587] text-sm leading-relaxed whitespace-pre-wrap font-light mb-5">{entry.deskripsi}</p>
-                    <p className="text-[#5c554c] text-[10px] uppercase tracking-[0.15em]">
-                      {new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </p>
-                  </div>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
         )}
 
-        <div className="text-center mt-16">
-          <button onClick={() => setShowModal(true)} className="text-[#5c554c] text-[10px] uppercase tracking-[0.15em] hover:text-[#c49a6c] transition cursor-pointer">
-            Admin
-          </button>
-        </div>
+        {/* Hidden Admin Button at Bottom for Visitors */}
+        {!isAdmin && (
+          <div className="text-center mt-20">
+            <button onClick={() => setShowModal(true)} className="text-[#5c554c] text-[10px] uppercase tracking-[0.15em] hover:text-[#c49a6c] transition cursor-pointer">
+              Admin Mode
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* Admin Login Modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-6" onClick={() => { setShowModal(false); setPassword(''); setError('') }}>
