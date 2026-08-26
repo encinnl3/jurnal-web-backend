@@ -21,15 +21,33 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     const session = localStorage.getItem('jurnal-session')
     if (!session) { window.location.href = `/visitor/${id}`; return }
-    const { profileId } = JSON.parse(session)
-    if (profileId !== id) { window.location.href = `/visitor/${id}`; return }
-    setIsAdmin(true)
+    
+    try {
+      const { profileId } = JSON.parse(session)
+      if (profileId !== id) {
+        localStorage.removeItem('jurnal-session') // Sesi tidak valid, hapus
+        window.location.href = `/visitor/${id}`
+        return
+      }
+      setIsAdmin(true)
+    } catch (e) {
+      localStorage.removeItem('jurnal-session')
+      window.location.href = `/visitor/${id}`
+    }
   }, [id])
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: p } = await (supabase.from('profiles') as any).select('*').eq('id', id)
-      if (p?.length > 0) setProfile(p[0])
+      const { data: p, error: pErr } = await (supabase.from('profiles') as any).select('*').eq('id', id)
+      
+      if (pErr || !p || p.length === 0) {
+        // Profile tidak ditemukan di DB, sesi admin otomatis hanguskan
+        localStorage.removeItem('jurnal-session')
+        window.location.href = '/'
+        return
+      }
+      
+      setProfile(p[0])
       const { data: e } = await (supabase.from('jurnal_entries') as any).select('*').eq('profile_id', id).order('day', { ascending: true })
       setEntries(e || [])
       setLoading(false)
