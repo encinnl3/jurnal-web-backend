@@ -2,16 +2,14 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Jurnal PKL | Simply® Style",
-  description: "Sistem pencatatan kegiatan harian PKL",
+  title: "Jurnal PKL | Digital Internship Journal",
+  description: "Sistem pencatatan kegiatan harian PKL real-time",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id" className="scroll-smooth">
-      <body>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
