@@ -1,14 +1,12 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
-import dynamic from 'next/dynamic'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { motion } from 'framer-motion'
-import ProfileCard from '@/components/ProfileCard'
-
-const ThreeBackground = dynamic(() => import('@/components/ThreeBackground'), { ssr: false })
 
 export default function Home() {
+  const router = useRouter()
   const [profiles, setProfiles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -24,54 +22,50 @@ export default function Home() {
   }, [])
 
   return (
-    <div className="relative min-h-screen overflow-hidden" style={{ background: '#0c0a09' }}>
-      <Suspense fallback={null}>
-        <ThreeBackground />
-      </Suspense>
-
+    <div className="relative min-h-screen overflow-hidden bg-[#0d0c0b]">
       <div className="absolute inset-0 z-10 flex flex-col items-center">
         <div className="w-full max-w-6xl px-8 pt-32 pb-20">
           <motion.div 
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-20"
+            className="text-center mb-16"
           >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="inline-block mb-6"
-            >
-              <span className="px-5 py-2 rounded-full border border-amber-600/30 text-amber-500 text-xs font-medium uppercase tracking-[0.2em]">
-                Praktik Kerja Lapangan
-              </span>
-            </motion.div>
-
-            <h1 className="text-6xl md:text-8xl font-bold text-white mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>
               Jurnal{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-700">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c49a6c] to-[#9e8b75]">
                 PKL
               </span>
             </h1>
-
-            <p className="text-lg text-stone-400 max-w-xl mx-auto font-light leading-relaxed">
-              Rekam jejak pengalaman harian para peserta Praktik Kerja Lapangan dengan presisi dan gaya profesional.
+            <p className="text-[#9e9587] max-w-md mx-auto font-light leading-relaxed">
+              Rekam jejak pengalaman harian selama menjalankan Praktik Kerja Lapangan.
             </p>
           </motion.div>
 
           {loading ? (
-            <div className="text-center text-stone-500">Loading...</div>
+            <div className="text-center text-[#9e9587]">Loading...</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              {profiles.map((profile, index) => (
-                <ProfileCard
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
+              {profiles.map((profile, i) => (
+                <motion.div
                   key={profile.id}
-                  id={profile.id}
-                  name={profile.name}
-                  avatar_url={profile.avatar_url}
-                  index={index}
-                />
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 + i * 0.1 }}
+                  whileHover={{ y: -4, borderColor: 'rgba(196, 154, 108, 0.3)' }}
+                  onClick={() => router.push(`/visitor/${profile.id}`)}
+                  className="glass-card p-8 text-center cursor-pointer transition-colors duration-300"
+                >
+                  <div className="w-16 h-16 rounded-full bg-[#1c1a18] border border-[#3c352e] flex items-center justify-center text-[#c49a6c] text-xl font-semibold mx-auto mb-4 overflow-hidden group-hover:border-[#c49a6c] transition-colors">
+                    {profile.avatar_url ? (
+                      <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      profile.name.charAt(0)
+                    )}
+                  </div>
+                  <h2 className="text-white text-lg font-semibold mb-1">{profile.name}</h2>
+                  <p className="text-[#9e9587] text-[10px] uppercase tracking-[0.2em]">Peserta PKL</p>
+                </motion.div>
               ))}
             </div>
           )}
