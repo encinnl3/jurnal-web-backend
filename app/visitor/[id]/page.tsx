@@ -22,7 +22,12 @@ export default function VisitorPage({ params }: { params: Promise<{ id: string }
   const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
-    // Check local session
+    if (profile?.theme) {
+      document.body.className = `theme-${profile.theme}`
+    }
+  }, [profile])
+
+  useEffect(() => {
     const session = localStorage.getItem('jurnal-session')
     if (session) {
       try {
