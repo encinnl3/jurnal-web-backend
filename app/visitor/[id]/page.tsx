@@ -72,27 +72,29 @@ export default function VisitorPage({ params }: { params: Promise<{ id: string }
         {entries.length === 0 ? (
           <div className="text-center py-20 text-[#9c8b78] text-lg">Belum ada jurnal.</div>
         ) : (
-          <div className="space-y-16">
+          <div className="space-y-8">
             {entries.map((entry) => (
-              <article key={entry.id}>
-                <div className="flex items-center gap-4 mb-6">
-                  <span className="tag" style={{padding: '6px 20px'}}>Day {entry.day}</span>
-                  <h2 className="heading-md display text-[#2c2418]">{entry.title}</h2>
-                </div>
+              <article key={entry.id} className="bg-white rounded-[24px] border border-[#e8e2d9] overflow-hidden hover:shadow-md transition-shadow">
                 {entry.foto_url && (
-                  <div className="rounded-3xl overflow-hidden mb-8 border border-[#e8e2d9]">
-                    <img src={entry.foto_url} alt={entry.title} className="w-full h-[400px] object-cover" />
+                  <div className="w-full h-[280px]">
+                    <img src={entry.foto_url} alt={entry.title} className="w-full h-full object-cover" />
                   </div>
                 )}
-                <div className="pl-6 border-l-2 border-[#b09678]">
-                  <p className="text-[#6b5e4e] text-lg leading-relaxed whitespace-pre-wrap font-light">
-                    {entry.deskripsi}
-                  </p>
-                </div>
-                <div className="mt-8 text-right">
-                  <time className="text-xs uppercase tracking-[0.2em] text-[#b09678] font-semibold">
-                    {new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </time>
+                <div className="p-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="tag" style={{padding: '5px 14px'}}>Day {entry.day}</span>
+                    <h2 className="font-semibold text-lg text-[#2c2418]">{entry.title}</h2>
+                  </div>
+                  <div className="pl-5 border-l-2 border-[#b09678]">
+                    <p className="text-[#6b5e4e] text-sm leading-relaxed whitespace-pre-wrap font-light">
+                      {entry.deskripsi}
+                    </p>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-[#f5f0e8]">
+                    <time className="text-[10px] uppercase tracking-[0.2em] text-[#b09678] font-semibold">
+                      {new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </time>
+                  </div>
                 </div>
               </article>
             ))}
