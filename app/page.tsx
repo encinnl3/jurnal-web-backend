@@ -3,13 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import type { Profile } from '@/lib/types'
-
-export const dynamic = 'force-dynamic'
 
 export default function Home() {
   const router = useRouter()
-  const [profiles, setProfiles] = useState<Profile[]>([])
+  const [profiles, setProfiles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -23,17 +20,25 @@ export default function Home() {
     fetchProfiles()
   }, [])
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-[#9c8b78]">
+        Loading...
+      </div>
+    )
+  }
+
   return (
     <main className="min-h-screen">
-      <section className="section-hero container-app">
-        <span className="tag">PKL Diary Archive</span>
-        <h1 className="heading-xl display text-[#2c2418]">Jurnal PKL</h1>
-        <p className="text-xl text-[#6b5e4e] max-w-md mx-auto font-light">
-          Rekam jejak pengalaman harian para peserta Praktik Kerja Lapangan.
+      <section className="section-hero">
+        <span className="tag">Praktik Kerja Lapangan</span>
+        <h1 className="heading-xl">Jurnal PKL</h1>
+        <p className="text-lg text-[#6b5e4e] max-w-lg mx-auto mt-6">
+          Rekam jejak pengalaman harian para peserta PKL.
         </p>
       </section>
 
-      <section className="container-app mb-24 max-w-3xl">
+      <div className="container-app mb-24">
         <div className="profiles-grid">
           {profiles.map((profile) => (
             <div
@@ -49,14 +54,14 @@ export default function Home() {
                 )}
               </div>
               <div className="text-center">
-                <h2 className="card-title text-[#2c2418] mb-1">{profile.name}</h2>
+                <h2 className="card-title">{profile.name}</h2>
                 <span className="card-subtitle">Peserta PKL</span>
               </div>
-              <button className="btn btn-primary w-full py-2.5 text-xs">Buka Jurnal</button>
+              <button className="btn btn-primary w-full">Buka Jurnal</button>
             </div>
           ))}
         </div>
-      </section>
+      </div>
     </main>
   )
 }
