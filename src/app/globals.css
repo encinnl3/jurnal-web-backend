@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0A0A0A;
-  --bg-secondary: #111111;
-  --bg-tertiary: #1A1A1A;
-  --border: #2A2A2A;
-  --text-primary: #F5F5F5;
-  --text-secondary: #A0A0A0;
+  --bg-primary: #000000;
+  --bg-secondary: #0A0A0A;
+  --bg-tertiary: #121212;
+  --border: #222222;
+  --text-primary: #FFFFFF;
+  --text-secondary: #999999;
   --text-muted: #555555;
   --accent-teal: #00B4A6;
   --accent-teal-dim: #007A70;

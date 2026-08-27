@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -34,7 +34,7 @@ export const EntryEditor: React.FC<EntryEditorProps> = ({
       content: editor?.getHTML() || "",
       week_number: parseInt(week),
       entry_date: date,
-      tags: tags.split(",").map(t => t.trim()).filter(Boolean),
+      tags: tags.split(",").map((t: string) => t.trim()).filter(Boolean),
     });
   };
 

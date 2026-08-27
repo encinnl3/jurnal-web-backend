@@ -1,13 +1,13 @@
 import React from "react";
 import { Avatar } from "@/components/ui/Avatar";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import Link from "next/link";
 
 export const ProfileCardsSection: React.FC = () => {
   const profiles = [
-    { name: "Janandra", slug: "janandra", role: "Frontend" },
-    { name: "Akmal", slug: "akmal", role: "Backend" },
-    { name: "Farhan", slug: "farhan", role: "UI/UX" },
+    { name: "Janandra", slug: "janandra" },
+    { name: "Akmal", slug: "akmal" },
+    { name: "Farhan", slug: "farhan" },
   ];
 
   return (
@@ -15,9 +15,10 @@ export const ProfileCardsSection: React.FC = () => {
       {profiles.map((p) => (
         <div key={p.slug} className="bg-bg-secondary border border-border p-8 rounded-2xl flex flex-col items-center text-center">
           <Avatar name={p.name} slug={p.slug} size="lg" className="-mt-20 mb-4" />
-          <h3 className="font-display text-xl font-bold text-text-primary">{p.name}</h3>
-          <Badge variant="orange" className="mt-2 mb-4">{p.role}</Badge>
-          <Button variant="outline" size="sm" className="mt-auto">Baca Jurnal →</Button>
+          <h3 className="font-display text-xl font-bold text-text-primary mb-6">{p.name}</h3>
+          <Link href={`/profiles/${p.slug}`}>
+            <Button variant="outline" size="sm" className="mt-auto">Baca Jurnal →</Button>
+          </Link>
         </div>
       ))}
     </section>
