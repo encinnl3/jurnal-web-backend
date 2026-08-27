@@ -1,13 +1,13 @@
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id       UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id       UUID,
   slug          TEXT UNIQUE NOT NULL,
   full_name     TEXT NOT NULL,
   company       TEXT,
   role_title    TEXT,
   bio           TEXT,
   start_date    DATE,
-  end_date      DATE,
+  end_date    DATE,
   avatar_url    TEXT,
   cover_url     TEXT,
   role          TEXT NOT NULL DEFAULT 'intern' CHECK (role IN ('intern', 'super_admin')),
@@ -16,7 +16,7 @@ CREATE TABLE profiles (
   updated_at    TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE journal_entries (
+CREATE TABLE IF NOT EXISTS journal_entries (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id    UUID REFERENCES profiles(id) ON DELETE CASCADE,
   title         TEXT NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE journal_entries (
   updated_at    TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE entry_photos (
+CREATE TABLE IF NOT EXISTS entry_photos (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   entry_id      UUID REFERENCES journal_entries(id) ON DELETE CASCADE,
   profile_id    UUID REFERENCES profiles(id) ON DELETE CASCADE,
@@ -38,7 +38,7 @@ CREATE TABLE entry_photos (
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE activity_log (
+CREATE TABLE IF NOT EXISTS activity_log (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id    UUID REFERENCES profiles(id) ON DELETE SET NULL,
   action        TEXT NOT NULL,
