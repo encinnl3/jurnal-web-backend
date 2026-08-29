@@ -1,16 +1,12 @@
 "use client";
 import React, { useEffect, useRef } from "react";
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { cn } from "@/utils";
-
-gsap.registerPlugin(ScrollTrigger);
 
 export const Marquee: React.FC = () => {
-  const trackRef = useRef<HTMLDivElement>(null);
+  const tweenRef = useRef<gsap.core.Tween | null>(null);
 
   useEffect(() => {
-    gsap.to(".ticker-track", {
+    tweenRef.current = gsap.to(".ticker-track", {
       xPercent: -50,
       ease: "none",
       duration: 20,
@@ -18,15 +14,23 @@ export const Marquee: React.FC = () => {
     });
   }, []);
 
+  const handleMouseEnter = () => tweenRef.current?.timeScale(0);
+  const handleMouseLeave = () => tweenRef.current?.timeScale(1);
+
   return (
-    <div className="w-full h-12 border-y border-border flex items-center overflow-hidden bg-transparent">
+    <div
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="w-full h-12 border-y border-border flex items-center overflow-hidden bg-transparent cursor-pointer"
+    >
       <div className="ticker-track flex whitespace-nowrap">
         {[...Array(8)].map((_, i) => (
           <span key={i} className="font-inter font-semibold uppercase tracking-[0.15em] text-xs text-text-muted mx-4">
-            JURNAL PKL · JANANDRA · AKMAL · FARHAN · 2025 · LAPORAN MAGANG ·
+            JURNAL PKL · <span className="text-accent-teal">JANANDRA</span> · <span className="text-accent-teal">AKMAL</span> · <span className="text-accent-teal">FARHAN</span> · 2025 · LAPORAN MAGANG ·
           </span>
         ))}
       </div>
     </div>
   );
 };
+

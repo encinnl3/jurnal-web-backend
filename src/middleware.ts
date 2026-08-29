@@ -33,11 +33,29 @@ export async function middleware(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-
   const path = request.nextUrl.pathname;
 
-  if (path.startsWith("/admin") && !user) {
+  if ((path.startsWith("/admin") || path.includes("/admin")) && !user) {
     return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, slug")
+      .eq("user_id", user.id)
+      .single();
+
+    if (path === "/admin" && profile?.role !== "super_admin") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    if (path.startsWith("/profiles/") && path.endsWith("/admin")) {
+      const slugInUrl = path.split("/")[2];
+      if (profile?.role !== "super_admin" && profile?.slug !== slugInUrl) {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+    }
   }
 
   return response;

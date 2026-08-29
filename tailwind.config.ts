@@ -15,6 +15,11 @@ const config: Config = {
           tertiary: "#1A1A1A",
         },
         border: "#2A2A2A",
+        text: {
+          primary: "#F5F5F5",
+          secondary: "#A0A0A0",
+          muted: "#555555",
+        },
         accent: {
           teal: "#00B4A6",
           "teal-dim": "#007A70",

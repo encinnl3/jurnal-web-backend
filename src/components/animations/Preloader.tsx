@@ -21,7 +21,7 @@ export const Preloader: React.FC = () => {
 
   return (
     <div ref={preloaderRef} className="fixed inset-0 z-[999] bg-bg-primary flex items-center justify-center">
-      <span className="preloader-word opacity-0 font-display font-extrabold text-8xl text-text-primary">PKL</span>
+      <span className="preloader-word opacity-0 font-display font-bold text-8xl text-text-primary">PKL</span>
     </div>
   );
 };
